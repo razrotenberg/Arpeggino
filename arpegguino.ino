@@ -48,9 +48,49 @@ configurer::Base * const __configurers[] = {
 };
 
 int __configurer = 0;
+unsigned long __blinking = -1;
+
+namespace controller
+{
+
+void blink()
+{
+    if (__blinking == -1)
+    {
+        __lcd.blink();
+    }
+
+    __blinking = millis();
+}
+
+void cursor(configurer::Base * const configurer = __configurers[__configurer])
+{
+    __lcd.setCursor(
+        configurer->col(),
+        configurer->row()
+    );
+}
+
+} // controller
 
 namespace handler
 {
+
+void blinking()
+{
+    if (__blinking == -1)
+    {
+        return;
+    }
+
+    if (millis() - __blinking < 5000)
+    {
+        return;
+    }
+
+    __lcd.noBlink();
+    __blinking = -1;
+}
 
 void knob()
 {
@@ -58,16 +98,12 @@ void knob()
 
     if (abs(pot - __pot) > 3) // ignore noise
     {
-        auto configurer = __configurers[__configurer];
-
-        if (configurer->set(pot))
+        if (__configurers[__configurer]->set(pot))
         {
-            configurer->print();
+            __configurers[__configurer]->print();
 
-            __lcd.setCursor( // reset the cursor after printing
-                configurer->col(),
-                configurer->row()
-            );
+            controller::cursor(); // reset the cursor after printing
+            controller::blink();
             
             __looper.config(__config);
         }
@@ -108,12 +144,15 @@ void configurer()
 
     if (pressed == true && previous == false)
     {
-        __configurer = (__configurer + 1) % (sizeof(__configurers) / sizeof(configurer::Base *));
+        if (__blinking != -1)
+        {
+            // go to the next configurer only if already blinking
+            __configurer = (__configurer + 1) % (sizeof(__configurers) / sizeof(configurer::Base *));
 
-        __lcd.setCursor(
-            __configurers[__configurer]->col(),
-            __configurers[__configurer]->row()
-        );
+            controller::cursor();
+        }
+    
+        controller::blink(); // blink and restart the timer anyway
     }
 
     previous = pressed;
@@ -123,6 +162,7 @@ void configurer()
 
 void interrupt()
 {
+    handler::blinking();
     handler::knob();
     handler::keys();
     handler::configurer();
@@ -133,7 +173,7 @@ void setup()
     Serial.begin(9600);
     __lcd.begin(16, 2);
 
-    __pot = analogRead(A5); // save the current potentiometer value
+    __pot = analogRead(A5); // save the current potentiometer value to calibrate handler::knob()
 
     Timer1.initialize(10000); // 10000us = 10ms
     Timer1.attachInterrupt(interrupt);
@@ -147,21 +187,11 @@ void setup()
     for (auto configurer : __configurers)
     {
         configurer->init();
-
-        __lcd.setCursor(
-            configurer->col(),
-            configurer->row()
-        );
-
+        controller::cursor(configurer);
         configurer->print();
     }
 
-    __lcd.setCursor(
-        __configurers[__configurer]->col(),
-        __configurers[__configurer]->row()
-    );
-
-    __lcd.blink();
+    controller::cursor();
 }
 
 void loop()
