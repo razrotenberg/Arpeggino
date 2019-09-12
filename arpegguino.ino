@@ -29,6 +29,8 @@ Looper::Config __config = {
     .octave     = 3,
     .mode       = Mode::Ionian,
     .bpm        = 60,
+    .style      = Style::Up,
+    .rhythm     = Rhythm::F,
 };
 
 Looper __looper(__config);
