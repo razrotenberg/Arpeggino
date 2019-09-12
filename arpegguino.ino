@@ -50,7 +50,7 @@ configurer::Base * const __configurers[] = {
 int __configurer = 0;
 unsigned long __blinking = -1;
 
-namespace controller
+namespace control
 {
 
 void blink()
@@ -71,9 +71,9 @@ void cursor(configurer::Base * const configurer = __configurers[__configurer])
     );
 }
 
-} // controller
+} // control
 
-namespace handler
+namespace handle
 {
 
 void blinking()
@@ -102,8 +102,8 @@ void knob()
         {
             __configurers[__configurer]->print();
 
-            controller::cursor(); // reset the cursor after printing
-            controller::blink();
+            control::cursor(); // reset the cursor after printing
+            control::blink();
             
             __looper.config(__config);
         }
@@ -149,23 +149,23 @@ void configurer()
             // go to the next configurer only if already blinking
             __configurer = (__configurer + 1) % (sizeof(__configurers) / sizeof(configurer::Base *));
 
-            controller::cursor();
+            control::cursor();
         }
     
-        controller::blink(); // blink and restart the timer anyway
+        control::blink(); // blink and restart the timer anyway
     }
 
     previous = pressed;
 }
 
-} // handler
+} // handle
 
 void interrupt()
 {
-    handler::blinking();
-    handler::knob();
-    handler::keys();
-    handler::configurer();
+    handle::blinking();
+    handle::knob();
+    handle::keys();
+    handle::configurer();
 }
 
 void setup()
@@ -173,7 +173,7 @@ void setup()
     Serial.begin(9600);
     __lcd.begin(16, 2);
 
-    __pot = analogRead(A5); // save the current potentiometer value to calibrate handler::knob()
+    __pot = analogRead(A5); // save the current potentiometer value to calibrate handle::knob()
 
     Timer1.initialize(10000); // 10000us = 10ms
     Timer1.attachInterrupt(interrupt);
@@ -187,11 +187,11 @@ void setup()
     for (auto configurer : __configurers)
     {
         configurer->init();
-        controller::cursor(configurer);
+        control::cursor(configurer);
         configurer->print();
     }
 
-    controller::cursor();
+    control::cursor();
 }
 
 void loop()
