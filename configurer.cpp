@@ -83,7 +83,7 @@ int Note::_print()
 }
 
 Mode::Mode(midiate::Looper::Config & config, LiquidCrystal & lcd) :
-    Base(config, lcd, 4, 0, 10)
+    Base(config, lcd, 6, 0, 10)
 {}
 
 bool Mode::set(short pot)
@@ -116,13 +116,13 @@ int Mode::_print()
 }
 
 Octave::Octave(midiate::Looper::Config & config, LiquidCrystal & lcd) :
-    Base(config, lcd, 4, 1, 1)
+    Base(config, lcd, 4, 0, 1)
 {}
 
 void Octave::init()
 {
-    _lcd.setCursor(0, 1);
-    _lcd.print("Oct");
+    _lcd.setCursor(3, 0);
+    _lcd.print("O");
 }
 
 bool Octave::set(short pot)
@@ -175,6 +175,72 @@ bool BPM::set(short pot)
 int BPM::_print()
 {
     return _lcd.print(_config.bpm, DEC);
+}
+
+Style::Style(midiate::Looper::Config & config, LiquidCrystal & lcd) :
+    Base(config, lcd, 1, 1, 2)
+{}
+
+void Style::init()
+{
+    _lcd.setCursor(0, 1);
+    _lcd.print("S");
+}
+
+bool Style::set(short pot)
+{
+    const auto number = constrain(
+        map(pot, 0, 1020, 0, 10),
+        0, 9
+    );
+
+    const auto style = static_cast<midiate::Style>(number);
+
+    if (style != _config.style)
+    {
+        /* out */ _config.style = style;
+        return true;
+    }
+
+    return false;
+}
+
+int Style::_print()
+{
+    return _lcd.print(static_cast<int>(_config.style) + 1, DEC);
+}
+
+Rhythm::Rhythm(midiate::Looper::Config & config, LiquidCrystal & lcd) :
+    Base(config, lcd, 5, 1, 1)
+{}
+
+void Rhythm::init()
+{
+    _lcd.setCursor(4, 1);
+    _lcd.print("R");
+}
+
+bool Rhythm::set(short pot)
+{
+    const auto number = constrain(
+        map(pot, 0, 1020, 0, 7),
+        0, 6
+    );
+
+    const auto rhythm = static_cast<midiate::Rhythm>(number);
+
+    if (rhythm != _config.rhythm)
+    {
+        /* out */ _config.rhythm = rhythm;
+        return true;
+    }
+
+    return false;
+}
+
+int Rhythm::_print()
+{
+    return _lcd.print(static_cast<int>(_config.rhythm) + 1, DEC);
 }
 
 } // configurer

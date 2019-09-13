@@ -79,4 +79,26 @@ private:
     int _print() override;
 };
 
+struct Style : public Base
+{
+    Style(midiate::Looper::Config & config, LiquidCrystal & lcd);
+
+    void init() override;
+    bool set(short pot) override;
+
+private:
+    int _print() override;
+};
+
+struct Rhythm : public Base
+{
+    Rhythm(midiate::Looper::Config & config, LiquidCrystal & lcd);
+
+    void init() override;
+    bool set(short pot) override;
+
+private:
+    int _print() override;
+};
+
 } // configurer

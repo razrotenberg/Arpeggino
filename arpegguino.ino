@@ -38,15 +38,19 @@ Looper __looper(__config);
 short __pot = -1; // the value of the configuration potentiometer
 
 configurer::BPM     __bpm   (__config, __lcd);
-configurer::Mode    __mode  (__config, __lcd);
 configurer::Note    __note  (__config, __lcd);
 configurer::Octave  __octave(__config, __lcd);
+configurer::Mode    __mode  (__config, __lcd);
+configurer::Style   __style (__config, __lcd);
+configurer::Rhythm  __rhythm(__config, __lcd);
 
 configurer::Base * const __configurers[] = {
     &__bpm,
-    &__mode,
     &__note,
     &__octave,
+    &__mode,
+    &__style,
+    &__rhythm,
 };
 
 int __configurer = 0;
