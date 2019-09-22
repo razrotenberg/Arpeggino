@@ -55,9 +55,21 @@ configurer::Base * const __configurers[] = {
 
 int __configurer = 0;
 unsigned long __blinking = -1;
+unsigned long __flashing = -1;
 
 namespace control
 {
+
+void flash()
+{
+    if (__flashing != -1)
+    {
+        return;
+    }
+
+    digitalWrite(LED_BUILTIN, HIGH);
+    __flashing = millis();
+}
 
 void blink()
 {
@@ -81,6 +93,22 @@ void cursor(configurer::Base * const configurer = __configurers[__configurer])
 
 namespace handle
 {
+
+void flashing()
+{
+    if (__flashing == -1)
+    {
+        return;
+    }
+
+    if (millis() - __flashing < 50)
+    {
+        return;
+    }
+
+    digitalWrite(LED_BUILTIN, LOW);
+    __flashing = -1;
+}
 
 void blinking()
 {
@@ -164,10 +192,16 @@ void configurer()
     previous = pressed;
 }
 
+void click(int)
+{
+    control::flash();
+}
+
 } // handle
 
 void interrupt()
 {
+    handle::flashing();
     handle::blinking();
     handle::knob();
     handle::keys();
@@ -186,6 +220,8 @@ void setup()
 
     pinMode(8, INPUT);
 
+    pinMode(LED_BUILTIN, OUTPUT);
+
     pinMode(14, INPUT);
     pinMode(15, INPUT);
     pinMode(16, INPUT);
@@ -202,5 +238,5 @@ void setup()
 
 void loop()
 {
-   __looper.run();
+    __looper.run(handle::click);
 }
