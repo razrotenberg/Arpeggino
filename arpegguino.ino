@@ -148,25 +148,24 @@ void knob()
 
 void keys()
 {
-    static bool previous[] = { false, false, false };
+    static char tags[] = { -1, -1, -1 }; // tags of the pressed buttons or (-1) for non-pressed ones
 
-    for (int i = 0; i < sizeof(previous) / sizeof(bool); ++i)
+    for (auto i = 0; i < sizeof(tags) / sizeof(char); ++i)
     {
         const auto degree = i + 1;
         const auto pin    = i + 14; // buttons are connected to pins [A0..A2] which are [14..16]
 
         const auto pressed = digitalRead(pin) == HIGH;
     
-        if (pressed == true && previous[i] == false)
+        if (pressed == true && tags[i] == -1)
         {
-            __looper.play(degree, i);
+            tags[i] = __looper.start(degree);
         }
-        else if (pressed == false && previous[i] == true)
+        else if (pressed == false && tags[i] != -1)
         {
-            __looper.stop(i);
+            __looper.stop(tags[i]);
+            tags[i] = -1;
         }
-
-        previous[i] = pressed;
     }
 }
 
