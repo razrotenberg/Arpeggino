@@ -223,8 +223,8 @@ void Rhythm::init()
 bool Rhythm::set(short pot)
 {
     const auto number = constrain(
-        map(pot, 0, 1020, 0, 7),
-        0, 6
+        map(pot, 0, 1020, 0, 8),
+        0, 7
     );
 
     const auto rhythm = static_cast<midiate::Rhythm>(number);
