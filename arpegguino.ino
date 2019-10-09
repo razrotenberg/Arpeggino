@@ -89,6 +89,15 @@ void cursor(configurer::Base * const configurer = __configurers[__configurer])
     );
 }
 
+void bar(int i)
+{
+    __lcd.setCursor(14, 0);
+    if (__lcd.print(i + 1, DEC) == 1)
+    {
+        __lcd.write(' '); // make sure the second digit is erased
+    }
+}
+
 } // control
 
 namespace handle
@@ -148,12 +157,12 @@ void knob()
 
 void keys()
 {
-    static char tags[] = { -1, -1, -1 }; // tags of the pressed buttons or (-1) for non-pressed ones
+    static char tags[] = { -1, -1 }; // tags of the pressed buttons or (-1) for non-pressed ones
 
     for (auto i = 0; i < sizeof(tags) / sizeof(char); ++i)
     {
         const auto degree = i + 1;
-        const auto pin    = i + 14; // buttons are connected to pins [A0..A2] which are [14..16]
+        const auto pin    = i + 14; // buttons are connected to pins [A0,A1] which are [14,15]
 
         const auto pressed = digitalRead(pin) == HIGH;
     
@@ -191,9 +200,27 @@ void configurer()
     previous = pressed;
 }
 
-void click(int)
+void record()
 {
-    control::flash();
+    static bool previous = false;
+
+    const auto pressed = digitalRead(A2) == HIGH;
+
+    if (pressed == true && previous == false)
+    {
+        const auto state = __looper.state();
+
+        if (state == Looper::State::Wander)
+        {
+            __looper.state(Looper::State::Record);
+        }
+        else if (state == Looper::State::Record)
+        {
+            __looper.state(Looper::State::Playback);
+        }
+    }
+
+    previous = pressed;
 }
 
 } // handle
@@ -205,6 +232,7 @@ void interrupt()
     handle::knob();
     handle::keys();
     handle::configurer();
+    handle::record();
 }
 
 void setup()
@@ -237,5 +265,10 @@ void setup()
 
 void loop()
 {
-    __looper.run(handle::click);
+    __looper.run([](int bar)
+        {
+            control::flash();
+            control::bar(bar);
+            control::cursor(); // return the cursor
+        });
 }
