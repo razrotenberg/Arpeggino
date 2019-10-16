@@ -214,9 +214,13 @@ void record()
         {
             __looper.state(Looper::State::Record);
         }
-        else if (state == Looper::State::Record)
+        else if (state == Looper::State::Record || state == Looper::State::Overlay)
         {
             __looper.state(Looper::State::Playback);
+        }
+        else if (state == Looper::State::Playback)
+        {
+            __looper.state(Looper::State::Overlay);
         }
     }
 
