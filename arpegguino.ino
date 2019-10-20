@@ -1,8 +1,17 @@
+#include "button.h"
 #include "configurer.h"
 
 #include <LiquidCrystal.h> 
 #include <TimerOne.h>
 #include <Midiate.h>
+
+namespace pin
+{
+
+constexpr auto Configure = 8;
+constexpr auto Record    = A2;
+
+} // pin
 
 //  LCD |   Arduino
 //  ---------------
@@ -180,11 +189,9 @@ void keys()
 
 void configurer()
 {
-    static bool previous = false;
+    static auto __button = Button(pin::Configure);
 
-    const auto pressed = digitalRead(8) == HIGH;
-
-    if (pressed == true && previous == false)
+    if (__button.check() == Button::Event::Down)
     {
         if (__blinking != -1)
         {
@@ -196,17 +203,13 @@ void configurer()
 
         control::blink(); // blink and restart the timer anyway
     }
-
-    previous = pressed;
 }
 
 void record()
 {
-    static bool previous = false;
+    static auto __button = Button(pin::Record);
 
-    const auto pressed = digitalRead(A2) == HIGH;
-
-    if (pressed == true && previous == false)
+    if (__button.check() == Button::Event::Click)
     {
         const auto state = __looper.state();
 
@@ -223,8 +226,6 @@ void record()
             __looper.state(Looper::State::Overlay);
         }
     }
-
-    previous = pressed;
 }
 
 } // handle
@@ -249,13 +250,10 @@ void setup()
     Timer1.initialize(10000); // 10000us = 10ms
     Timer1.attachInterrupt(interrupt);
 
-    pinMode(8, INPUT);
-
     pinMode(LED_BUILTIN, OUTPUT);
 
     pinMode(14, INPUT);
     pinMode(15, INPUT);
-    pinMode(16, INPUT);
 
     for (auto configurer : __configurers)
     {
