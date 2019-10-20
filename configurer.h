@@ -1,104 +1,52 @@
 #pragma once
 
-#include <LiquidCrystal.h> 
+#include "view.h"
+
 #include <Midiate.h> 
 
 namespace configurer
 {
 
-struct Base
+struct Base : public View
 {
-    Base(
-        midiate::Looper::Config & config,
-        LiquidCrystal & lcd,
-        int col,
-        int row,
-        int size
-    );
+    Base(midiate::Looper::Config & config, LiquidCrystal & lcd, char col, char row) :
+        View(lcd),
+        _config(config),
+        _col(col),
+        _row(row)
+    {}
 
-    void print();
-    
-    int col() const { return _col; };
-    int row() const { return _row; };
-
-    virtual void init() {};
+    // maybe update the configuration according the value of the knob
     virtual bool set(short pot) = 0;
 
-private:
-    virtual int _print() = 0;
+    char col() const { return _col; };
+    char row() const { return _row; };
 
 protected:
     midiate::Looper::Config & _config;
-    LiquidCrystal           & _lcd;
 
 private:
-    int _col;
-    int _row;
-    int _size;
+    char _col;
+    char _row;
 };
 
-struct Note : public Base
-{
-    Note(midiate::Looper::Config & config, LiquidCrystal & lcd);
+#define CONFIGURER(name, col, row)                                      \
+    struct name : public Base                                           \
+    {                                                                   \
+        name(midiate::Looper::Config & config, LiquidCrystal & lcd) :   \
+            Base(config, lcd, col, row) {}                              \
+                                                                        \
+        bool set(short pot) override;                                   \
+        void print(What what) override;                                 \
+    }
 
-    bool set(short pot) override;
+CONFIGURER(Note,    0, 0);
+CONFIGURER(Mode,    6, 0);
+CONFIGURER(Octave,  4, 0);
+CONFIGURER(BPM,     9, 1);
+CONFIGURER(Style,   1, 1);
+CONFIGURER(Rhythm,  5, 1);
 
-private:
-    int _print() override;
-};
-
-struct Mode : public Base
-{
-    Mode(midiate::Looper::Config & config, LiquidCrystal & lcd);
-
-    bool set(short pot) override;
-
-private:
-    int _print() override;
-};
-
-struct Octave : public Base
-{
-    Octave(midiate::Looper::Config & config, LiquidCrystal & lcd);
-
-    void init() override;
-    bool set(short pot) override;
-
-private:
-    int _print() override;
-};
-
-struct BPM : public Base
-{
-    BPM(midiate::Looper::Config & config, LiquidCrystal & lcd);
-
-    void init() override;
-    bool set(short pot) override;
-
-private:
-    int _print() override;
-};
-
-struct Style : public Base
-{
-    Style(midiate::Looper::Config & config, LiquidCrystal & lcd);
-
-    void init() override;
-    bool set(short pot) override;
-
-private:
-    int _print() override;
-};
-
-struct Rhythm : public Base
-{
-    Rhythm(midiate::Looper::Config & config, LiquidCrystal & lcd);
-
-    void init() override;
-    bool set(short pot) override;
-
-private:
-    int _print() override;
-};
+#undef CONFIGURER
 
 } // configurer

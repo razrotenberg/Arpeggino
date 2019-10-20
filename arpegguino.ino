@@ -139,15 +139,15 @@ void knob()
 {
     const short pot = analogRead(A5);
 
-    if (abs(pot - __pot) > 3) // ignore noise
+    if (abs(pot - __pot) > 10) // ignore noise
     {
         if (__configurers[__configurer]->set(pot))
         {
-            __configurers[__configurer]->print();
+            __configurers[__configurer]->print(View::What::Data);
 
             control::cursor(); // reset the cursor after printing
             control::blink();
-            
+
             __looper.config(__config);
         }
 
@@ -193,7 +193,7 @@ void configurer()
 
             control::cursor();
         }
-    
+
         control::blink(); // blink and restart the timer anyway
     }
 
@@ -259,9 +259,9 @@ void setup()
 
     for (auto configurer : __configurers)
     {
-        configurer->init();
+        configurer->print(View::What::Title);
         control::cursor(configurer);
-        configurer->print();
+        configurer->print(View::What::Data);
     }
 
     control::cursor();
