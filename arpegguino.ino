@@ -98,12 +98,20 @@ void cursor(configurer::Base * const configurer = __configurers[__configurer])
     );
 }
 
-void bar(int i)
+void bar(int i) // i of (-1) clears the bar from the screen
 {
     __lcd.setCursor(14, 0);
-    if (__lcd.print(i + 1, DEC) == 1)
+    
+    char written = 0;
+    
+    if (i != -1)
     {
-        __lcd.write(' '); // make sure the second digit is erased
+        written = __lcd.print(i + 1, DEC);
+    }
+
+    while (written++ < 2)
+    {
+        __lcd.write(' ');
     }
 }
 
@@ -209,10 +217,11 @@ void record()
 {
     static auto __button = Button(pin::Record);
 
-    if (__button.check() == Button::Event::Click)
-    {
-        const auto state = __looper.state();
+    const auto event = __button.check();
+    const auto state = __looper.state();
 
+    if (event == Button::Event::Click)
+    {
         if (state == Looper::State::Wander)
         {
             __looper.state(Looper::State::Record);
@@ -224,6 +233,15 @@ void record()
         else if (state == Looper::State::Playback)
         {
             __looper.state(Looper::State::Overlay);
+        }
+    }
+    else if (event == Button::Event::ClickPress) // go back to wander mode
+    {
+        if (state != Looper::State::Wander)
+        {
+            __looper.state(Looper::State::Wander);
+
+            control::bar(-1); // remove the bar counter from the screen
         }
     }
 }
