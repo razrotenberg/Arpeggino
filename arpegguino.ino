@@ -1,9 +1,8 @@
 #include "button.h"
+#include "config.h"
 #include "configurer.h"
 
-#include <LiquidCrystal.h> 
 #include <TimerOne.h>
-#include <Midiate.h>
 
 namespace pin
 {
@@ -30,19 +29,8 @@ constexpr auto Record    = A2;
 // 
 LiquidCrystal __lcd(12, 11, 5, 4, 3, 2);
 
-using namespace midiate;
-
-Looper::Config __config = {
-    .note       = Note::C,
-    .accidental = Accidental::Natural,
-    .octave     = 3,
-    .mode       = Mode::Ionian,
-    .bpm        = 60,
-    .style      = Style::Up,
-    .rhythm     = Rhythm::F,
-};
-
-Looper __looper(__config);
+Config __config;
+midiate::Looper __looper(__config.looper);
 
 short __pot = -1; // the value of the configuration potentiometer
 
@@ -164,8 +152,6 @@ void knob()
 
             control::cursor(); // reset the cursor after printing
             control::blink();
-
-            __looper.config(__config);
         }
 
         __pot = pot;
@@ -219,6 +205,8 @@ void record()
 
     const auto event = __button.check();
     const auto state = __looper.state();
+
+    using midiate::Looper;
 
     if (event == Button::Event::Click)
     {

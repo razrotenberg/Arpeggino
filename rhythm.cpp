@@ -14,9 +14,9 @@ bool Rhythm::set(short pot)
 
     const auto rhythm = static_cast<midiate::Rhythm>(number);
 
-    if (rhythm != _config.rhythm)
+    if (rhythm != _config.looper.rhythm)
     {
-        /* out */ _config.rhythm = rhythm;
+        /* out */ _config.looper.rhythm = rhythm;
         return true;
     }
 
@@ -31,7 +31,7 @@ void Rhythm::print(What what)
     }
     else if (what == What::Data)
     {
-        _print(static_cast<int>(_config.rhythm) + 1);
+        _print(static_cast<int>(_config.looper.rhythm) + 1);
     }
 }
 

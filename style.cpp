@@ -14,9 +14,9 @@ bool Style::set(short pot)
 
     const auto style = static_cast<midiate::Style>(number);
 
-    if (style != _config.style)
+    if (style != _config.looper.style)
     {
-        /* out */ _config.style = style;
+        /* out */ _config.looper.style = style;
         return true;
     }
 
@@ -31,7 +31,7 @@ void Style::print(What what)
     }
     else if (what == What::Data)
     {
-        _print(col(), row(), 2, static_cast<int>(_config.style) + 1);
+        _print(static_cast<int>(_config.looper.style) + 1);
     }
 }
 
