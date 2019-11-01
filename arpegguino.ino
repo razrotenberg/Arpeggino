@@ -223,14 +223,13 @@ void record()
             __looper.state(Looper::State::Overlay);
         }
     }
-    else if (event == Button::Event::ClickPress) // go back to wander mode
+    else if (event == Button::Event::Press)
     {
-        if (state != Looper::State::Wander)
-        {
-            __looper.state(Looper::State::Wander);
-
-            control::bar(-1); // remove the bar counter from the screen
-        }
+        __looper.undo();
+    }
+    else if (event == Button::Event::ClickPress)
+    {
+        __looper.state(Looper::State::Wander);
     }
 }
 
@@ -275,7 +274,11 @@ void loop()
 {
     __looper.run([](int bar)
         {
-            control::flash();
+            if (bar != -1)
+            {
+                control::flash();
+            }
+
             control::bar(bar);
             control::cursor(); // return the cursor
         });
