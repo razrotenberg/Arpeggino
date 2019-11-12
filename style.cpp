@@ -31,7 +31,7 @@ void Style::print(What what)
     }
     else if (what == What::Data)
     {
-        _print(static_cast<int>(_config.looper.style) + 1);
+        _print(col(), row(), 2, static_cast<int>(_config.looper.style) + 1);
     }
 }
 
