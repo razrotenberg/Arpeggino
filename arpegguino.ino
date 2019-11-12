@@ -1,14 +1,33 @@
-#include "button.h"
 #include "config.h"
 #include "configurer.h"
 
+#include <Controlino.h>
+#include <Midiate.h>
 #include <TimerOne.h>
 
 namespace pin
 {
 
-constexpr auto Configure = 8;
-constexpr auto Record    = A2;
+constexpr auto S0 = 2;
+constexpr auto S1 = 3;
+constexpr auto S2 = 4;
+constexpr auto S3 = 5;
+constexpr auto SIG = 6;
+constexpr auto Configure = 8; // muxed
+constexpr auto Record = 9; // muxed
+constexpr auto Knob = A0;
+
+namespace LCD
+{
+
+constexpr auto RS = 8;
+constexpr auto E  = 9;
+constexpr auto D4 = 10;
+constexpr auto D5 = 11;
+constexpr auto D6 = 12;
+constexpr auto D7 = A5;
+
+} // LCD
 
 } // pin
 
@@ -17,22 +36,23 @@ constexpr auto Record    = A2;
 //  VSS |   GND
 //  VDD |   5V
 //  V0  |   Potentiometer
-//  RS  |   D12
+//  RS  |   8
 //  RW  |   GND
-//  E   |   D11
-//  D4  |   D5
-//  D5  |   D4
-//  D6  |   D3
-//  D7  |   D2
+//  E   |   9
+//  D4  |   10
+//  D5  |   11
+//  D6  |   12
+//  D7  |   A5
 //  A   |   5V
 //  K   |   GND
 // 
-LiquidCrystal __lcd(12, 11, 5, 4, 3, 2);
+LiquidCrystal __lcd(pin::LCD::RS, pin::LCD::E, pin::LCD::D4, pin::LCD::D5, pin::LCD::D6, pin::LCD::D7);
+
+controlino::Selector __selector(pin::S0, pin::S1, pin::S2, pin::S3);
+controlino::Multiplexer __multiplexer(pin::SIG, __selector);
 
 Config __config;
 midiate::Looper __looper(__config.looper);
-
-short __pot = -1; // the value of the configuration potentiometer
 
 configurer::BPM     __bpm   (__config, __lcd);
 configurer::Note    __note  (__config, __lcd);
@@ -142,9 +162,10 @@ void blinking()
 
 void knob()
 {
-    const short pot = analogRead(A5);
+    static controlino::Potentiometer __potentiometer(pin::Knob);
 
-    if (abs(pot - __pot) > 10) // ignore noise
+    int pot;
+    if (__potentiometer.check(/* out */ pot))
     {
         if (__configurers[__configurer]->set(pot))
         {
@@ -153,39 +174,46 @@ void knob()
             control::cursor(); // reset the cursor after printing
             control::blink();
         }
-
-        __pot = pot;
     }
 }
 
 void keys()
 {
-    static char tags[] = { -1, -1 }; // tags of the pressed buttons or (-1) for non-pressed ones
-
-    for (auto i = 0; i < sizeof(tags) / sizeof(char); ++i)
+    struct Key : public controlino::Key
     {
-        const auto degree = i + 1;
-        const auto pin    = i + 14; // buttons are connected to pins [A0,A1] which are [14,15]
+        Key(char pin) :
+            controlino::Key(__multiplexer, pin),
+            tag(-1)
+        {}
 
-        const auto pressed = digitalRead(pin) == HIGH;
-    
-        if (pressed == true && tags[i] == -1)
+        char tag;
+    };
+
+    static Key __keys[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+
+    for (auto i = 0; i < sizeof(__keys) / sizeof(Key); ++i)
+    {
+        auto & key = __keys[i];
+        
+        const auto event = key.check();
+
+        if (event == Key::Event::Down)
         {
-            tags[i] = __looper.start(degree);
+            key.tag = __looper.start(i + 1);
         }
-        else if (pressed == false && tags[i] != -1)
+        else if (event == Key::Event::Up && key.tag != -1) // the tag could be (-1) if there was no place for the layer when the key was pressed
         {
-            __looper.stop(tags[i]);
-            tags[i] = -1;
+            __looper.stop(key.tag);
+            key.tag = -1;
         }
     }
 }
 
 void configurer()
 {
-    static auto __button = Button(pin::Configure);
+    static controlino::Key __key(__multiplexer, pin::Configure);
 
-    if (__button.check() == Button::Event::Down)
+    if (__key.check() == controlino::Key::Event::Down)
     {
         if (__blinking != -1)
         {
@@ -201,12 +229,13 @@ void configurer()
 
 void record()
 {
-    static auto __button = Button(pin::Record);
+    using controlino::Button;
+    using midiate::Looper;
+
+    static auto __button = Button(__multiplexer, pin::Record);
 
     const auto event = __button.check();
     const auto state = __looper.state();
-
-    using midiate::Looper;
 
     if (event == Button::Event::Click)
     {
@@ -250,15 +279,10 @@ void setup()
     Serial.begin(9600);
     __lcd.begin(16, 2);
 
-    __pot = analogRead(A5); // save the current potentiometer value to calibrate handle::knob()
-
     Timer1.initialize(10000); // 10000us = 10ms
     Timer1.attachInterrupt(interrupt);
 
     pinMode(LED_BUILTIN, OUTPUT);
-
-    pinMode(14, INPUT);
-    pinMode(15, INPUT);
 
     for (auto configurer : __configurers)
     {
@@ -278,7 +302,7 @@ void loop()
             {
                 control::flash();
             }
-
+            
             control::bar(bar);
             control::cursor(); // return the cursor
         });
