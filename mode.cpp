@@ -32,18 +32,16 @@ void Mode::print(What what)
     if (what == What::Data)
     {
         static const char * __names[] = {
-            "Ionian",
-            "Dorian",
-            "Phrygian",
-            "Lydian",
-            "Mixolydian",
-            "Aeolian",
-            "Locrian",
+            "Ion",
+            "Dor",
+            "Phr",
+            "Lyd",
+            "Mix",
+            "Aeo",
+            "Loc",
         };
         
-        constexpr auto max = 10; // 'Mixolydian'
-        
-        _print(col(), row(), max, __names[static_cast<int>(_config.mode)]);
+        _print(__names[static_cast<int>(_config.mode)]);
     }
 }
 
