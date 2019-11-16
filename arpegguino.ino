@@ -1,4 +1,4 @@
-#include "config.h"
+ #include "config.h"
 #include "configurer.h"
 
 #include <Controlino.h>
@@ -28,6 +28,14 @@ constexpr auto D6 = 12;
 constexpr auto D7 = A5;
 
 } // LCD
+
+namespace LED
+{
+
+constexpr auto Flash = 13;
+constexpr auto Record = A1;
+
+} // LED
 
 } // pin
 
@@ -77,6 +85,11 @@ unsigned long __flashing = -1;
 namespace control
 {
 
+void record(bool recording)
+{
+    digitalWrite(pin::LED::Record, recording ? HIGH : LOW);
+}
+
 void flash()
 {
     if (__flashing != -1)
@@ -84,7 +97,7 @@ void flash()
         return;
     }
 
-    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(pin::LED::Flash, HIGH);
     __flashing = millis();
 }
 
@@ -135,7 +148,7 @@ void flashing()
         return;
     }
 
-    if (millis() - __flashing < 50)
+    if (millis() - __flashing < 70)
     {
         return;
     }
@@ -235,6 +248,12 @@ void record()
     static auto __button = Button(__multiplexer, pin::Record);
 
     const auto event = __button.check();
+
+    if (event == Button::Event::None)
+    {
+        return;
+    }
+    
     const auto state = __looper.state();
 
     if (event == Button::Event::Click)
@@ -260,6 +279,8 @@ void record()
     {
         __looper.state(Looper::State::Wander);
     }
+
+    control::record(__looper.state() == Looper::State::Record || __looper.state() == Looper::State::Overlay);
 }
 
 } // handle
@@ -282,7 +303,8 @@ void setup()
     Timer1.initialize(10000); // 10000us = 10ms
     Timer1.attachInterrupt(interrupt);
 
-    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(pin::LED::Flash, OUTPUT);
+    pinMode(pin::LED::Record, OUTPUT);
 
     for (auto configurer : __configurers)
     {
