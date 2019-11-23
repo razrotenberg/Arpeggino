@@ -17,10 +17,6 @@ bool Mode::set(short pot)
     if (mode != _config.mode)
     {
         /* out */ _config.mode = mode;
-        /* out */ _config.looper.scale = midiate::Scale(
-            midiate::Pitch(_config.note, _config.accidental, _config.octave),
-            _config.mode
-        );
         return true;
     }
 

@@ -38,10 +38,6 @@ bool Note::set(short pot)
     {
         /* out */ _config.note = note;
         /* out */ _config.accidental = accidental;
-        /* out */ _config.looper.scale = midiate::Scale(
-            midiate::Pitch(_config.note, _config.accidental, _config.octave),
-            _config.mode
-        );
         return true;
     }
 

@@ -12,9 +12,9 @@ bool BPM::set(short pot)
         40, 230
     );
 
-    if (bpm != _config.looper.bpm)
+    if (bpm != _config.bpm)
     {
-        /* out */ _config.looper.bpm = bpm;
+        /* out */ _config.bpm = bpm;
         return true;
     }
 
@@ -30,7 +30,7 @@ void BPM::print(What what)
 
     if (what == What::Data)
     {
-        _print(col(), row(), 3, _config.looper.bpm);
+        _print(col(), row(), 3, _config.bpm);
     }
 }
 

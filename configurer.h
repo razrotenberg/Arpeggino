@@ -1,14 +1,15 @@
 #pragma once
 
-#include "config.h"
 #include "view.h"
+
+#include <Midiate.h>
 
 namespace configurer
 {
 
 struct Base : public View
 {
-    Base(Config & config, LiquidCrystal & lcd, char col, char row) :
+    Base(midiate::Looper::Config & config, LiquidCrystal & lcd, char col, char row) :
         View(lcd),
         _config(config),
         _col(col),
@@ -22,21 +23,21 @@ struct Base : public View
     char row() const { return _row; };
 
 protected:
-    Config & _config;
+    midiate::Looper::Config & _config;
 
 private:
     char _col;
     char _row;
 };
 
-#define CONFIGURER(name, col, row)                      \
-    struct name : public Base                           \
-    {                                                   \
-        name(Config & config, LiquidCrystal & lcd) :    \
-            Base(config, lcd, col, row) {}              \
-                                                        \
-        bool set(short pot) override;                   \
-        void print(What what) override;                 \
+#define CONFIGURER(name, col, row)                                      \
+    struct name : public Base                                           \
+    {                                                                   \
+        name(midiate::Looper::Config & config, LiquidCrystal & lcd) :   \
+            Base(config, lcd, col, row) {}                              \
+                                                                        \
+        bool set(short pot) override;                                   \
+        void print(What what) override;                                 \
     }
 
 CONFIGURER(Note,    0, 0);

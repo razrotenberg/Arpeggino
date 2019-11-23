@@ -1,4 +1,3 @@
- #include "config.h"
 #include "configurer.h"
 
 #include <Controlino.h>
@@ -59,8 +58,17 @@ LiquidCrystal __lcd(pin::LCD::RS, pin::LCD::E, pin::LCD::D4, pin::LCD::D5, pin::
 controlino::Selector __selector(pin::S0, pin::S1, pin::S2, pin::S3);
 controlino::Multiplexer __multiplexer(pin::SIG, __selector);
 
-Config __config;
-midiate::Looper __looper(__config.looper);
+midiate::Looper::Config __config = {
+    .note       = midiate::Note::C,
+    .accidental = midiate::Accidental::Natural,
+    .octave     = 3,
+    .mode       = midiate::Mode::Ionian,
+    .bpm        = 60,
+    .style      = midiate::Style::Up,
+    .rhythm     = midiate::Rhythm::F,
+};
+
+midiate::Looper __looper(__config);
 
 configurer::BPM     __bpm   (__config, __lcd);
 configurer::Note    __note  (__config, __lcd);
