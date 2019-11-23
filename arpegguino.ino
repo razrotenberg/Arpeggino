@@ -262,21 +262,21 @@ void record()
         return;
     }
     
-    const auto state = __looper.state();
+    const auto state = __looper.state;
 
     if (event == Button::Event::Click)
     {
         if (state == Looper::State::Wander)
         {
-            __looper.state(Looper::State::Record);
+            __looper.state = Looper::State::Record;
         }
         else if (state == Looper::State::Record || state == Looper::State::Overlay)
         {
-            __looper.state(Looper::State::Playback);
+            __looper.state = Looper::State::Playback;
         }
         else if (state == Looper::State::Playback)
         {
-            __looper.state(Looper::State::Overlay);
+            __looper.state = Looper::State::Overlay;
         }
     }
     else if (event == Button::Event::Press)
@@ -285,10 +285,10 @@ void record()
     }
     else if (event == Button::Event::ClickPress)
     {
-        __looper.state(Looper::State::Wander);
+        __looper.state = Looper::State::Wander;
     }
 
-    control::record(__looper.state() == Looper::State::Record || __looper.state() == Looper::State::Overlay);
+    control::record(__looper.state == Looper::State::Record || __looper.state == Looper::State::Overlay);
 }
 
 } // handle
