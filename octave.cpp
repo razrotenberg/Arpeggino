@@ -8,8 +8,8 @@ namespace configurer
 bool Octave::set(short pot)
 {
     const auto octave = constrain(
-        map(pot, 10, 1020, 0, 10),
-        1, 9
+        map(pot, 10, 1020, 0, 8),
+        1, 7
     );
 
     if (octave != _config.octave)
