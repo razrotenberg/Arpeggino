@@ -52,7 +52,7 @@ constexpr auto Record = A1;
 //  D7  |   A5
 //  A   |   5V
 //  K   |   GND
-// 
+//
 LiquidCrystal __lcd(pin::LCD::RS, pin::LCD::E, pin::LCD::D4, pin::LCD::D5, pin::LCD::D6, pin::LCD::D7);
 
 controlino::Selector __selector(pin::S0, pin::S1, pin::S2, pin::S3);
@@ -65,7 +65,7 @@ midiate::Looper::Config __config = {
     .mode       = midiate::Mode::Ionian,
     .bpm        = 60,
     .style      = midiate::Style::Up,
-    .rhythm     = midiate::Rhythm::F,
+    .rhythm     = midiate::Rhythm::_9,
 };
 
 midiate::Looper __looper(__config);
@@ -130,9 +130,9 @@ void cursor(configurer::Base * const configurer = __configurers[__configurer])
 void bar(int i) // i of (-1) clears the bar from the screen
 {
     __lcd.setCursor(14, 0);
-    
+
     char written = 0;
-    
+
     if (i != -1)
     {
         written = __lcd.print(i + 1, DEC);
@@ -215,7 +215,7 @@ void keys()
     for (auto i = 0; i < sizeof(__keys) / sizeof(Key); ++i)
     {
         auto & key = __keys[i];
-        
+
         const auto event = key.check();
 
         if (event == Key::Event::Down)
@@ -261,7 +261,7 @@ void record()
     {
         return;
     }
-    
+
     const auto state = __looper.state;
 
     if (event == Button::Event::Click)
@@ -332,7 +332,7 @@ void loop()
             {
                 control::flash();
             }
-            
+
             control::bar(bar);
             control::cursor(); // return the cursor
         });

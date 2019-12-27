@@ -7,9 +7,11 @@ namespace configurer
 
 bool Style::set(short pot)
 {
+    constexpr auto Count = (unsigned)midiate::Style::Count;
+
     const auto number = constrain(
-        map(pot, 10, 1020, -1, 10),
-        0, 9
+        map(pot, 10, 1020, -1, Count),
+        0, Count - 1
     );
 
     const auto style = static_cast<midiate::Style>(number);

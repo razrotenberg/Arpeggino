@@ -7,9 +7,11 @@ namespace configurer
 
 bool Rhythm::set(short pot)
 {
+    constexpr auto Count = (unsigned)midiate::Rhythm::Count;
+
     const auto number = constrain(
-        map(pot, 10, 1020, -1, 8),
-        0, 7
+        map(pot, 10, 1020, -1, Count),
+        0, Count - 1
     );
 
     const auto rhythm = static_cast<midiate::Rhythm>(number);
@@ -31,7 +33,7 @@ void Rhythm::print(What what)
     }
     else if (what == What::Data)
     {
-        _print(static_cast<int>(_config.rhythm) + 1);
+        _print(col(), row(), 2, static_cast<int>(_config.rhythm) + 1);
     }
 }
 
