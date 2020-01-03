@@ -1,39 +1,48 @@
 #include "configurer.h"
 
-#include <Arduino.h>
-
 namespace configurer
 {
 
-bool Style::set(short pot)
+Action Style::check()
 {
-    constexpr auto Count = (unsigned)midiate::Style::Count;
+    static auto __key = controlino::Key(__multiplexer, pin::configure::Style);
 
-    const auto number = constrain(
-        map(pot, 10, 1020, -1, Count),
-        0, Count - 1
-    );
-
-    const auto style = static_cast<midiate::Style>(number);
-
-    if (style != _config.style)
+    if (__key.check() == controlino::Key::Event::Down)
     {
-        /* out */ _config.style = style;
-        return true;
+        /* out */ _config.style = (midiate::Style)(((unsigned)_config.style + 1) % (unsigned)midiate::Style::Count);
+        return Action::Focus;
     }
 
-    return false;
+    return Action::None;
 }
 
-void Style::print(What what)
+void Style::print(What what, How how)
 {
-    if (what == What::Title)
+    if (how == How::Summary)
     {
-        _print(0, 1, 'S');
+        if (what == What::Title)
+        {
+            _print(0, 1, 'S');
+        }
+        else if (what == What::Data)
+        {
+            _print(1, 1, 2, (unsigned)_config.style + 1);
+        }
     }
-    else if (what == What::Data)
+    else if (how == How::Focus)
     {
-        _print(col(), row(), 2, static_cast<int>(_config.style) + 1);
+        if (what == What::Title)
+        {
+            _print(0, 0, "Style #");
+        }
+        else if (what == What::Data)
+        {
+            _print(7, 0, 2, (unsigned)_config.style + 1);
+
+            midiate::style::Name name;
+            midiate::style::name(_config.style, /* out */ name);
+            _print(0, 1, sizeof(midiate::style::Name), name);
+        }
     }
 }
 

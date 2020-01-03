@@ -5,49 +5,45 @@
 namespace configurer
 {
 
-bool Note::set(short pot)
+Action Note::check()
 {
-    // we have 7 notes with 3 options (flat, natural, sharp) each
+    static auto __key = controlino::Key(__multiplexer, pin::configure::Note);
 
-    const auto number = constrain(
-        map(pot, 10, 1020, -1, 21),
-        0, 20
-    );
-
-    const auto div = number / 3;
-
-    midiate::Note note;
-
-    if      (div == 0) { note = midiate::Note::C; }
-    else if (div == 1) { note = midiate::Note::D; }
-    else if (div == 2) { note = midiate::Note::E; }
-    else if (div == 3) { note = midiate::Note::F; }
-    else if (div == 4) { note = midiate::Note::G; }
-    else if (div == 5) { note = midiate::Note::A; }
-    else if (div == 6) { note = midiate::Note::B; }
-
-    const auto mod = number % 3;
-
-    midiate::Accidental accidental;
-
-    if      (mod == 0) { accidental = midiate::Accidental::Flat;    }
-    else if (mod == 1) { accidental = midiate::Accidental::Natural; }
-    else if (mod == 2) { accidental = midiate::Accidental::Sharp;   }
-    
-    if (note != _config.note || accidental != _config.accidental)
+    if (__key.check() == controlino::Key::Event::Down)
     {
-        /* out */ _config.note = note;
-        /* out */ _config.accidental = accidental;
-        return true;
+        if (_config.accidental == midiate::Accidental::Flat)
+        {
+            _config.accidental = midiate::Accidental::Natural;
+        }
+        else if (_config.accidental == midiate::Accidental::Natural)
+        {
+            _config.accidental = midiate::Accidental::Sharp;
+        }
+        else if (_config.accidental == midiate::Accidental::Sharp)
+        {
+            _config.accidental = midiate::Accidental::Flat;
+
+            if      (_config.note == midiate::Note::C) { _config.note = midiate::Note::D; }
+            else if (_config.note == midiate::Note::D) { _config.note = midiate::Note::E; }
+            else if (_config.note == midiate::Note::E) { _config.note = midiate::Note::F; }
+            else if (_config.note == midiate::Note::F) { _config.note = midiate::Note::G; }
+            else if (_config.note == midiate::Note::G) { _config.note = midiate::Note::A; }
+            else if (_config.note == midiate::Note::A) { _config.note = midiate::Note::B; }
+            else if (_config.note == midiate::Note::B) { _config.note = midiate::Note::C; }
+        }
+
+        return Action::Summary;
     }
 
-    return false;
+    return Action::None;
 }
 
-void Note::print(What what)
+void Note::print(What what, How)
 {
     if (what == What::Data)
     {
+        _lcd.setCursor(0, 0);
+
         if      (_config.note == midiate::Note::A) { _print('A'); }
         else if (_config.note == midiate::Note::B) { _print('B'); }
         else if (_config.note == midiate::Note::C) { _print('C'); }

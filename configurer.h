@@ -1,52 +1,54 @@
 #pragma once
 
+#include "pin.h"
 #include "view.h"
 
+#include <Controlino.h>
 #include <Midiate.h>
 
 namespace configurer
 {
 
+enum class Action
+{
+    None,
+
+    Summary,
+    Focus,
+};
+
 struct Base : public View
 {
-    Base(midiate::Looper::Config & config, LiquidCrystal & lcd, char col, char row) :
+    Base(midiate::Looper::Config & config, LiquidCrystal & lcd) :
         View(lcd),
-        _config(config),
-        _col(col),
-        _row(row)
+        _config(config)
     {}
 
-    // maybe update the configuration according the value of the knob
-    virtual bool set(short pot) = 0;
-
-    char col() const { return _col; };
-    char row() const { return _row; };
+    virtual Action check() = 0;
 
 protected:
     midiate::Looper::Config & _config;
-
-private:
-    char _col;
-    char _row;
 };
 
-#define CONFIGURER(name, col, row)                                      \
+#define CONFIGURER(name)                                                \
     struct name : public Base                                           \
     {                                                                   \
         name(midiate::Looper::Config & config, LiquidCrystal & lcd) :   \
-            Base(config, lcd, col, row) {}                              \
+            Base(config, lcd) {}                                        \
                                                                         \
-        bool set(short pot) override;                                   \
-        void print(What what) override;                                 \
+        Action check() override;                                        \
+        void print(What what, How how) override;                        \
     }
 
-CONFIGURER(Note,    0, 0);
-CONFIGURER(Mode,    6, 0);
-CONFIGURER(Octave,  4, 0);
-CONFIGURER(BPM,     9, 1);
-CONFIGURER(Style,   1, 1);
-CONFIGURER(Rhythm,  5, 1);
+CONFIGURER(Note);
+CONFIGURER(Mode);
+CONFIGURER(Octave);
+CONFIGURER(BPM);
+CONFIGURER(Style);
+CONFIGURER(Rhythm);
 
 #undef CONFIGURER
 
 } // configurer
+
+extern controlino::Multiplexer __multiplexer;

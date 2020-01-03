@@ -1,27 +1,23 @@
 #include "configurer.h"
 
-#include <Arduino.h>
-
 namespace configurer
 {
 
-bool BPM::set(short pot)
+Action BPM::check()
 {
-    const auto bpm = constrain(
-        map(pot, 10, 1020, 20, 240),
-        40, 230
-    );
+    static auto __potentiometer = controlino::Potentiometer(pin::configure::BPM);
 
-    if (bpm != _config.bpm)
+    int bpm;
+    if (__potentiometer.check<40, 230>(/* out */ bpm))
     {
         /* out */ _config.bpm = bpm;
-        return true;
+        return Action::Summary;
     }
 
-    return false;
+    return Action::None;
 }
 
-void BPM::print(What what)
+void BPM::print(What what, How)
 {
     if (what == What::Title)
     {
@@ -30,7 +26,7 @@ void BPM::print(What what)
 
     if (what == What::Data)
     {
-        _print(col(), row(), 3, _config.bpm);
+        _print(9, 1, 3, _config.bpm);
     }
 }
 

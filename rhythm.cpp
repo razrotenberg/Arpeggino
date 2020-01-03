@@ -1,39 +1,48 @@
 #include "configurer.h"
 
-#include <Arduino.h>
-
 namespace configurer
 {
 
-bool Rhythm::set(short pot)
+Action Rhythm::check()
 {
-    constexpr auto Count = (unsigned)midiate::Rhythm::Count;
+    static auto __key = controlino::Key(__multiplexer, pin::configure::Rhythm);
 
-    const auto number = constrain(
-        map(pot, 10, 1020, -1, Count),
-        0, Count - 1
-    );
-
-    const auto rhythm = static_cast<midiate::Rhythm>(number);
-
-    if (rhythm != _config.rhythm)
+    if (__key.check() == controlino::Key::Event::Down)
     {
-        /* out */ _config.rhythm = rhythm;
-        return true;
+        /* out */ _config.rhythm = (midiate::Rhythm)(((unsigned)_config.rhythm + 1) % (unsigned)midiate::Rhythm::Count);
+        return Action::Focus;
     }
 
-    return false;
+    return Action::None;
 }
 
-void Rhythm::print(What what)
+void Rhythm::print(What what, How how)
 {
-    if (what == What::Title)
+    if (how == How::Summary)
     {
-        _print(4, 1, 'R');
+        if (what == What::Title)
+        {
+            _print(4, 1, 'R');
+        }
+        else if (what == What::Data)
+        {
+            _print(5, 1, 2, (unsigned)_config.rhythm + 1);
+        }
     }
-    else if (what == What::Data)
+    else if (how == How::Focus)
     {
-        _print(col(), row(), 2, static_cast<int>(_config.rhythm) + 1);
+        if (what == What::Title)
+        {
+            _print(0, 0, "Rhythm #");
+        }
+        else if (what == What::Data)
+        {
+            _print(8, 0, 2, (unsigned)_config.rhythm + 1);
+
+            midiate::rhythm::Description desc;
+            midiate::rhythm::description(_config.rhythm, /* out */ desc);
+            _print(0, 1, desc);
+        }
     }
 }
 

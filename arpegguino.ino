@@ -4,59 +4,10 @@
 #include <Midiate.h>
 #include <TimerOne.h>
 
-namespace pin
-{
-
-constexpr auto S0 = 2;
-constexpr auto S1 = 3;
-constexpr auto S2 = 4;
-constexpr auto S3 = 5;
-constexpr auto SIG = 6;
-constexpr auto Configure = 8; // muxed
-constexpr auto Record = 9; // muxed
-constexpr auto Knob = A0;
-
-namespace LCD
-{
-
-constexpr auto RS = 8;
-constexpr auto E  = 9;
-constexpr auto D4 = 10;
-constexpr auto D5 = 11;
-constexpr auto D6 = 12;
-constexpr auto D7 = A5;
-
-} // LCD
-
-namespace LED
-{
-
-constexpr auto Flash = 13;
-constexpr auto Record = A1;
-
-} // LED
-
-} // pin
-
-//  LCD |   Arduino
-//  ---------------
-//  VSS |   GND
-//  VDD |   5V
-//  V0  |   Potentiometer
-//  RS  |   8
-//  RW  |   GND
-//  E   |   9
-//  D4  |   10
-//  D5  |   11
-//  D6  |   12
-//  D7  |   A5
-//  A   |   5V
-//  K   |   GND
-//
 LiquidCrystal __lcd(pin::LCD::RS, pin::LCD::E, pin::LCD::D4, pin::LCD::D5, pin::LCD::D6, pin::LCD::D7);
 
-controlino::Selector __selector(pin::S0, pin::S1, pin::S2, pin::S3);
-controlino::Multiplexer __multiplexer(pin::SIG, __selector);
+controlino::Selector __selector(pin::selector::S0, pin::selector::S1, pin::selector::S2, pin::selector::S3);
+controlino::Multiplexer __multiplexer(pin::multiplexer::SIG, __selector);
 
 midiate::Looper::Config __config = {
     .note       = midiate::Note::C,
@@ -65,7 +16,7 @@ midiate::Looper::Config __config = {
     .mode       = midiate::Mode::Ionian,
     .bpm        = 60,
     .style      = midiate::Style::Up,
-    .rhythm     = midiate::Rhythm::_9,
+    .rhythm     = midiate::Rhythm::_7,
 };
 
 midiate::Looper __looper(__config);
@@ -86,8 +37,12 @@ configurer::Base * const __configurers[] = {
     &__rhythm,
 };
 
-int __configurer = 0;
-unsigned long __blinking = -1;
+struct
+{
+    configurer::Base * configurer = nullptr;
+    unsigned long millis = -1;
+} __focused;
+
 unsigned long __flashing = -1;
 
 namespace control
@@ -109,22 +64,43 @@ void flash()
     __flashing = millis();
 }
 
-void blink()
+void summary(configurer::Base * configurer = nullptr) // 'nullptr' means all configurers
 {
-    if (__blinking == -1)
+    if (__focused.configurer != nullptr) // some configurer is in focus currently
     {
-        __lcd.blink();
+        __focused.millis = -1;
+        __focused.configurer = nullptr;
+        __lcd.clear();
+
+        configurer = nullptr; // print all titles and values
     }
 
-    __blinking = millis();
+    if (configurer == nullptr)
+    {
+        for (auto configurer : __configurers)
+        {
+            configurer->print(View::What::Title, View::How::Summary);
+            configurer->print(View::What::Data, View::How::Summary);
+        }
+    }
+    else
+    {
+        configurer->print(View::What::Data, View::How::Summary);
+    }
 }
 
-void cursor(configurer::Base * const configurer = __configurers[__configurer])
+void focus(configurer::Base * configurer)
 {
-    __lcd.setCursor(
-        configurer->col(),
-        configurer->row()
-    );
+    __focused.millis = millis();
+
+    if (__focused.configurer != configurer)
+    {
+        __lcd.clear();
+        __focused.configurer = configurer;
+        __focused.configurer->print(View::What::Title, View::How::Focus);
+    }
+
+    __focused.configurer->print(View::What::Data, View::How::Focus);
 }
 
 void bar(int i) // i of (-1) clears the bar from the screen
@@ -165,35 +141,39 @@ void flashing()
     __flashing = -1;
 }
 
-void blinking()
+void focus()
 {
-    if (__blinking == -1)
+    if (__focused.millis == -1)
     {
         return;
     }
 
-    if (millis() - __blinking < 5000)
+    if (millis() - __focused.millis < 3200)
     {
         return;
     }
 
-    __lcd.noBlink();
-    __blinking = -1;
+    control::summary();
 }
 
-void knob()
+void configurers()
 {
-    static controlino::Potentiometer __potentiometer(pin::Knob);
-
-    int pot;
-    if (__potentiometer.check(/* out */ pot))
+    for (auto configurer : __configurers)
     {
-        if (__configurers[__configurer]->set(pot))
-        {
-            __configurers[__configurer]->print(View::What::Data);
+        const auto action = configurer->check();
 
-            control::cursor(); // reset the cursor after printing
-            control::blink();
+        if (action == configurer::Action::None)
+        {
+            continue;
+        }
+
+        if (action == configurer::Action::Summary)
+        {
+            control::summary(configurer);
+        }
+        else if (action == configurer::Action::Focus)
+        {
+            control::focus(configurer);
         }
     }
 }
@@ -227,24 +207,6 @@ void keys()
             __looper.stop(key.tag);
             key.tag = -1;
         }
-    }
-}
-
-void configurer()
-{
-    static controlino::Key __key(__multiplexer, pin::Configure);
-
-    if (__key.check() == controlino::Key::Event::Down)
-    {
-        if (__blinking != -1)
-        {
-            // go to the next configurer only if already blinking
-            __configurer = (__configurer + 1) % (sizeof(__configurers) / sizeof(configurer::Base *));
-
-            control::cursor();
-        }
-
-        control::blink(); // blink and restart the timer anyway
     }
 }
 
@@ -296,10 +258,9 @@ void record()
 void interrupt()
 {
     handle::flashing();
-    handle::blinking();
-    handle::knob();
+    handle::focus();
+    handle::configurers();
     handle::keys();
-    handle::configurer();
     handle::record();
 }
 
@@ -314,14 +275,7 @@ void setup()
     pinMode(pin::LED::Flash, OUTPUT);
     pinMode(pin::LED::Record, OUTPUT);
 
-    for (auto configurer : __configurers)
-    {
-        configurer->print(View::What::Title);
-        control::cursor(configurer);
-        configurer->print(View::What::Data);
-    }
-
-    control::cursor();
+    control::summary();
 }
 
 void loop()
@@ -334,6 +288,5 @@ void loop()
             }
 
             control::bar(bar);
-            control::cursor(); // return the cursor
         });
 }

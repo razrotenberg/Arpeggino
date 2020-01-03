@@ -1,27 +1,22 @@
 #include "configurer.h"
 
-#include <Arduino.h>
-
 namespace configurer
 {
 
-bool Octave::set(short pot)
+Action Octave::check()
 {
-    const auto octave = constrain(
-        map(pot, 10, 1020, 0, 8),
-        1, 7
-    );
+    static auto __key = controlino::Key(__multiplexer, pin::configure::Octave);
 
-    if (octave != _config.octave)
+    if (__key.check() == controlino::Key::Event::Down)
     {
-        /* out */ _config.octave = octave;
-        return true;
+        /* out */ _config.octave = (_config.octave % 7) + 1;
+        return Action::Summary;
     }
 
-    return false;
+    return Action::None;
 }
 
-void Octave::print(What what)
+void Octave::print(What what, How)
 {
     if (what == What::Title)
     {
@@ -29,7 +24,7 @@ void Octave::print(What what)
     }
     else if (what == What::Data)
     {
-        _print(_config.octave);
+        _print(4, 0, _config.octave);
     }
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <LiquidCrystal.h> 
+#include <LiquidCrystal.h>
 
 struct View
 {
@@ -12,7 +12,13 @@ struct View
         Data,
     };
 
-    virtual void print(What what) = 0;
+    enum class How
+    {
+        Summary,
+        Focus,
+    };
+
+    virtual void print(What what, How how) = 0;
 
 protected:
     template <typename T>
@@ -39,6 +45,5 @@ protected:
         }
     }
 
-private:
     LiquidCrystal & _lcd;
 };

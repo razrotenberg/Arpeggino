@@ -1,43 +1,29 @@
 #include "configurer.h"
 
-#include <Arduino.h>
-
 namespace configurer
 {
 
-bool Mode::set(short pot)
+Action Mode::check()
 {
-    const auto number = constrain(
-        map(pot, 10, 1020, -1, 7),
-        0, 6
-    );
+    static auto __key = controlino::Key(__multiplexer, pin::configure::Mode);
 
-    const auto mode = static_cast<midiate::Mode>(number);
-
-    if (mode != _config.mode)
+    if (__key.check() == controlino::Key::Event::Down)
     {
-        /* out */ _config.mode = mode;
-        return true;
+        /* out */ _config.mode = (midiate::Mode)(((unsigned)_config.mode + 1) % (unsigned)midiate::Mode::Count);
+        return Action::Summary;
     }
 
-    return false;
+    return Action::None;
 }
 
-void Mode::print(What what)
+void Mode::print(What what, How)
 {
     if (what == What::Data)
     {
-        static const char * __names[] = {
-            "Ion",
-            "Dor",
-            "Phr",
-            "Lyd",
-            "Mix",
-            "Aeo",
-            "Loc",
-        };
-        
-        _print(__names[static_cast<int>(_config.mode)]);
+        midiate::mode::Name name;
+        midiate::mode::name(_config.mode, /* out */ name);
+        name[3] = '\0';
+        _print(6, 0, name);
     }
 }
 
