@@ -23,7 +23,7 @@ void Mode::print(What what, How)
         midiate::mode::Name name;
         midiate::mode::name(_config.mode, /* out */ name);
         name[3] = '\0';
-        _print(6, 0, name);
+        _print(0, 1, name);
     }
 }
 

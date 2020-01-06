@@ -15,8 +15,10 @@ midiate::Looper::Config __config = {
     .octave     = 3,
     .mode       = midiate::Mode::Ionian,
     .bpm        = 60,
-    .style      = midiate::Style::Up,
     .rhythm     = midiate::Rhythm::_7,
+    .steps      = 3,
+    .perm       = 0,
+    .looped     = false,
 };
 
 midiate::Looper __looper(__config);

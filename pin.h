@@ -7,7 +7,7 @@
 namespace pin
 {
 
-constexpr auto Record = MUXED(15);
+constexpr auto Record = MUXED(8);
 
 namespace selector
 {
@@ -50,11 +50,12 @@ namespace configure
 {
 
 constexpr auto BPM    = A0;
-constexpr auto Mode   = MUXED(12);
+constexpr auto Mode   = MUXED(14);
 constexpr auto Note   = MUXED(10);
 constexpr auto Octave = MUXED(11);
-constexpr auto Rhythm = MUXED(14);
-constexpr auto Style  = MUXED(13);
+constexpr auto Rhythm = MUXED(15);
+constexpr auto Steps  = MUXED(12);
+constexpr auto Perm   = MUXED(13);
 
 } // configure
 
