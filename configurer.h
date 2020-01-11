@@ -1,11 +1,7 @@
 #pragma once
 
-#include "pin.h"
-#include "view.h"
-
-#include <Controlino.h>
-#include <Midiate.h>
-
+namespace arpegguino
+{
 namespace configurer
 {
 
@@ -17,38 +13,32 @@ enum class Action
     Focus,
 };
 
-struct Base : public View
+struct Base
 {
-    Base(midiate::Looper::Config & config, LiquidCrystal & lcd) :
-        View(lcd),
-        _config(config)
-    {}
-
     virtual Action check() = 0;
-
-protected:
-    midiate::Looper::Config & _config;
+    virtual void update() = 0;
 };
 
-#define CONFIGURER(name)                                                \
-    struct name : public Base                                           \
-    {                                                                   \
-        name(midiate::Looper::Config & config, LiquidCrystal & lcd) :   \
-            Base(config, lcd) {}                                        \
-                                                                        \
-        Action check() override;                                        \
-        void print(What what, How how) override;                        \
-    }
+#define CONFIGURER(name)            \
+    struct name : public Base       \
+    {                               \
+        Action check() override;    \
+        void update() override;     \
+    };                              \
+                                    \
+    extern name __ ## name
 
-CONFIGURER(Note);
-CONFIGURER(Mode);
-CONFIGURER(Octave);
 CONFIGURER(BPM);
-CONFIGURER(Style);
+CONFIGURER(Mode);
+CONFIGURER(Note);
+CONFIGURER(Octave);
+CONFIGURER(Perm);
+CONFIGURER(Steps);
 CONFIGURER(Rhythm);
 
 #undef CONFIGURER
 
-} // configurer
+#define INIT_CONFIGURER(name) name __ ## name
 
-extern controlino::Multiplexer __multiplexer;
+} // configurer
+} // arpegguino

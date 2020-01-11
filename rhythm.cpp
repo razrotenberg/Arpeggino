@@ -1,4 +1,7 @@
-#include "configurer.h"
+#include "internal.h"
+
+namespace arpegguino
+{
 
 namespace configurer
 {
@@ -9,12 +12,23 @@ Action Rhythm::check()
 
     if (__key.check() == controlino::Key::Event::Down)
     {
-        /* out */ _config.rhythm = (midiate::Rhythm)(((unsigned)_config.rhythm + 1) % (unsigned)midiate::Rhythm::Count);
         return Action::Focus;
     }
 
     return Action::None;
 }
+
+void Rhythm::update()
+{
+    __config.rhythm = (midiate::Rhythm)(((unsigned)__config.rhythm + 1) % (unsigned)midiate::Rhythm::Count);
+}
+
+INIT_CONFIGURER(Rhythm);
+
+} // configurer
+
+namespace viewer
+{
 
 void Rhythm::print(What what, How how)
 {
@@ -26,7 +40,7 @@ void Rhythm::print(What what, How how)
         }
         else if (what == What::Data)
         {
-            _print(5, 1, 2, (unsigned)_config.rhythm + 1);
+            _print(5, 1, 2, (unsigned)__config.rhythm + 1);
         }
     }
     else if (how == How::Focus)
@@ -37,13 +51,17 @@ void Rhythm::print(What what, How how)
         }
         else if (what == What::Data)
         {
-            _print(8, 0, 2, (unsigned)_config.rhythm + 1);
+            _print(8, 0, 2, (unsigned)__config.rhythm + 1);
 
             midiate::rhythm::Description desc;
-            midiate::rhythm::description(_config.rhythm, /* out */ desc);
+            midiate::rhythm::description(__config.rhythm, /* out */ desc);
             _print(0, 1, desc);
         }
     }
 }
 
-} // configurer
+INIT_VIEWER(Rhythm);
+
+} // viewer
+
+} // arpegguino

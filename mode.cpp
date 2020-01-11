@@ -1,4 +1,9 @@
-#include "configurer.h"
+#include "internal.h"
+
+#include <assert.h>
+
+namespace arpegguino
+{
 
 namespace configurer
 {
@@ -9,22 +14,39 @@ Action Mode::check()
 
     if (__key.check() == controlino::Key::Event::Down)
     {
-        /* out */ _config.mode = (midiate::Mode)(((unsigned)_config.mode + 1) % (unsigned)midiate::Mode::Count);
         return Action::Summary;
     }
 
     return Action::None;
 }
 
-void Mode::print(What what, How)
+void Mode::update()
 {
+    __config.mode = (midiate::Mode)(((unsigned)__config.mode + 1) % (unsigned)midiate::Mode::Count);
+}
+
+INIT_CONFIGURER(Mode);
+
+} // configurer
+
+namespace viewer
+{
+
+void Mode::print(What what, How how)
+{
+    assert(how == How::Summary);
+
     if (what == What::Data)
     {
         midiate::mode::Name name;
-        midiate::mode::name(_config.mode, /* out */ name);
+        midiate::mode::name(__config.mode, /* out */ name);
         name[3] = '\0';
         _print(0, 1, name);
     }
 }
 
-} // configurer
+INIT_VIEWER(Mode);
+
+} // viewer
+
+} // arpegguino

@@ -1,24 +1,41 @@
-#include "configurer.h"
+#include "internal.h"
+
+#include <assert.h>
+
+namespace arpegguino
+{
 
 namespace configurer
 {
 
+static auto __potentiometer = controlino::Potentiometer(pin::configure::BPM);
+
 Action BPM::check()
 {
-    static auto __potentiometer = controlino::Potentiometer(pin::configure::BPM);
-
-    int bpm;
-    if (__potentiometer.check<40, 230>(/* out */ bpm))
+    if (__potentiometer.check<40, 230>() != -1)
     {
-        /* out */ _config.bpm = bpm;
         return Action::Summary;
     }
 
     return Action::None;
 }
 
-void BPM::print(What what, How)
+void BPM::update()
 {
+    __config.bpm = __potentiometer.read<40, 230>();
+}
+
+INIT_CONFIGURER(BPM);
+
+} // configurer
+
+namespace viewer
+{
+
+void BPM::print(What what, How how)
+{
+    assert(how == How::Summary);
+
     if (what == What::Title)
     {
         _print(13, 1, "bpm");
@@ -26,8 +43,12 @@ void BPM::print(What what, How)
 
     if (what == What::Data)
     {
-        _print(9, 1, 3, _config.bpm);
+        _print(9, 1, 3, __config.bpm);
     }
 }
 
-} // configurer
+INIT_VIEWER(BPM);
+
+} // viewer
+
+} // arpegguino

@@ -1,8 +1,9 @@
-#include "configurer.h"
+#include "internal.h"
 
-#include <Controlino.h>
-#include <Midiate.h>
 #include <TimerOne.h>
+
+namespace arpegguino
+{
 
 LiquidCrystal __lcd(pin::LCD::RS, pin::LCD::E, pin::LCD::D4, pin::LCD::D5, pin::LCD::D6, pin::LCD::D7);
 
@@ -21,27 +22,30 @@ midiate::Looper::Config __config = {
     .looped     = false,
 };
 
+namespace
+{
+
 midiate::Looper __looper(__config);
 
-configurer::BPM     __bpm   (__config, __lcd);
-configurer::Note    __note  (__config, __lcd);
-configurer::Octave  __octave(__config, __lcd);
-configurer::Mode    __mode  (__config, __lcd);
-configurer::Style   __style (__config, __lcd);
-configurer::Rhythm  __rhythm(__config, __lcd);
+struct Component
+{
+    configurer::Base & configurer;
+    viewer::Base & viewer;
+};
 
-configurer::Base * const __configurers[] = {
-    &__bpm,
-    &__note,
-    &__octave,
-    &__mode,
-    &__style,
-    &__rhythm,
+Component __components[] = {
+    { configurer::__BPM,    viewer::__BPM },
+    { configurer::__Mode,   viewer::__Mode },
+    { configurer::__Note,   viewer::__Note },
+    { configurer::__Octave, viewer::__Octave },
+    { configurer::__Perm,   viewer::__Style },
+    { configurer::__Steps,  viewer::__Style },
+    { configurer::__Rhythm, viewer::__Rhythm },
 };
 
 struct
 {
-    configurer::Base * configurer = nullptr;
+    viewer::Base * viewer = nullptr;
     unsigned long millis = -1;
 } __focused;
 
@@ -66,43 +70,42 @@ void flash()
     __flashing = millis();
 }
 
-void summary(configurer::Base * configurer = nullptr) // 'nullptr' means all configurers
+void summary(viewer::Base * viewer = nullptr) // 'nullptr' means all configurers
 {
-    if (__focused.configurer != nullptr) // some configurer is in focus currently
+    if (__focused.viewer != nullptr) // some viewer is in focus currently
     {
         __focused.millis = -1;
-        __focused.configurer = nullptr;
+        __focused.viewer = nullptr;
         __lcd.clear();
 
-        configurer = nullptr; // print all titles and values
+        viewer = nullptr; // print all titles and values
     }
 
-    if (configurer == nullptr)
+    if (viewer == nullptr)
     {
-        for (auto configurer : __configurers)
+        for (auto & component : __components)
         {
-            configurer->print(View::What::Title, View::How::Summary);
-            configurer->print(View::What::Data, View::How::Summary);
+            component.viewer.print(viewer::What::Title, viewer::How::Summary);
+            component.viewer.print(viewer::What::Data, viewer::How::Summary);
         }
     }
     else
     {
-        configurer->print(View::What::Data, View::How::Summary);
+        viewer->print(viewer::What::Data, viewer::How::Summary);
     }
 }
 
-void focus(configurer::Base * configurer)
+void focus(viewer::Base & viewer)
 {
-    __focused.millis = millis();
-
-    if (__focused.configurer != configurer)
+    if (__focused.viewer != &viewer) // either in summary mode or another viewer is currently in focus
     {
         __lcd.clear();
-        __focused.configurer = configurer;
-        __focused.configurer->print(View::What::Title, View::How::Focus);
+        __focused.viewer = &viewer;
+        __focused.viewer->print(viewer::What::Title, viewer::How::Focus);
     }
 
-    __focused.configurer->print(View::What::Data, View::How::Focus);
+    __focused.viewer->print(viewer::What::Data, viewer::How::Focus);
+    __focused.millis = millis();
 }
 
 void bar(int i) // i of (-1) clears the bar from the screen
@@ -158,24 +161,30 @@ void focus()
     control::summary();
 }
 
-void configurers()
+void components()
 {
-    for (auto configurer : __configurers)
+    for (auto & component : __components)
     {
-        const auto action = configurer->check();
+        const auto action = component.configurer.check();
 
         if (action == configurer::Action::None)
         {
             continue;
         }
 
+        if ((action == configurer::Action::Summary && __focused.viewer == nullptr) ||
+            (action == configurer::Action::Focus && __focused.viewer == &component.viewer))
+        {
+            component.configurer.update();
+        }
+
         if (action == configurer::Action::Summary)
         {
-            control::summary(configurer);
+            control::summary(&component.viewer);
         }
         else if (action == configurer::Action::Focus)
         {
-            control::focus(configurer);
+            control::focus(component.viewer);
         }
     }
 }
@@ -261,34 +270,38 @@ void interrupt()
 {
     handle::flashing();
     handle::focus();
-    handle::configurers();
+    handle::components();
     handle::keys();
     handle::record();
 }
 
+} //
+
+} // arpegguino
+
 void setup()
 {
     Serial.begin(9600);
-    __lcd.begin(16, 2);
+    arpegguino::__lcd.begin(16, 2);
 
     Timer1.initialize(10000); // 10000us = 10ms
-    Timer1.attachInterrupt(interrupt);
+    Timer1.attachInterrupt(arpegguino::interrupt);
 
     pinMode(pin::LED::Flash, OUTPUT);
     pinMode(pin::LED::Record, OUTPUT);
 
-    control::summary();
+    arpegguino::control::summary();
 }
 
 void loop()
 {
-    __looper.run([](int bar)
+    arpegguino::__looper.run([](int bar)
         {
             if (bar != -1)
             {
-                control::flash();
+                arpegguino::control::flash();
             }
 
-            control::bar(bar);
+            arpegguino::control::bar(bar);
         });
 }

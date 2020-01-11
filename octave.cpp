@@ -1,4 +1,9 @@
-#include "configurer.h"
+#include "internal.h"
+
+#include <assert.h>
+
+namespace arpegguino
+{
 
 namespace configurer
 {
@@ -9,23 +14,40 @@ Action Octave::check()
 
     if (__key.check() == controlino::Key::Event::Down)
     {
-        /* out */ _config.octave = (_config.octave % 7) + 1;
         return Action::Summary;
     }
 
     return Action::None;
 }
 
-void Octave::print(What what, How)
+void Octave::update()
 {
+    __config.octave = (__config.octave % 7) + 1;
+}
+
+INIT_CONFIGURER(Octave);
+
+} // configurer
+
+namespace viewer
+{
+
+void Octave::print(What what, How how)
+{
+    assert(how == How::Summary);
+
     if (what == What::Title)
     {
         _print(3, 0, 'O');
     }
     else if (what == What::Data)
     {
-        _print(4, 0, _config.octave);
+        _print(4, 0, __config.octave);
     }
 }
 
-} // configurer
+INIT_VIEWER(Octave);
+
+} // viewer
+
+} // arpegguino
