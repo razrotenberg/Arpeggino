@@ -1,7 +1,5 @@
 #include "internal.h"
 
-#include <assert.h>
-
 namespace arpegguino
 {
 
@@ -14,7 +12,7 @@ Action Mode::check()
 
     if (__key.check() == controlino::Key::Event::Down)
     {
-        return Action::Summary;
+        return Action::Focus;
     }
 
     return Action::None;
@@ -34,14 +32,24 @@ namespace viewer
 
 void Mode::print(What what, How how)
 {
-    assert(how == How::Summary);
-
     if (what == What::Data)
     {
         midiate::mode::Name name;
         midiate::mode::name(__config.mode, /* out */ name);
-        name[3] = '\0';
-        _print(0, 1, name);
+
+        if (how == How::Summary)
+        {
+            name[3] = '\0';
+            _print(0, 1, name);
+        }
+        else if (how == How::Focus)
+        {
+            _print(0, 1, sizeof(name), name);
+        }
+    }
+    else if (what == What::Title && how == How::Focus)
+    {
+        _print(0, 0, "Mode: ");
     }
 }
 
