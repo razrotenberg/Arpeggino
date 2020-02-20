@@ -407,6 +407,9 @@ void loop()
                 arpegguino::control::flash();
             }
 
-            arpegguino::control::bar(bar);
+            if (arpegguino::__focused.viewer == nullptr)
+            {
+                arpegguino::control::bar(bar);
+            }
         });
 }
