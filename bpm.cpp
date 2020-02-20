@@ -22,7 +22,7 @@ Action BPM::check()
 
 void BPM::update()
 {
-    __config.bpm = __potentiometer.read<40, 230>();
+    __looper.bpm = __potentiometer.read<40, 230>();
 }
 
 INIT_CONFIGURER(BPM);
@@ -43,7 +43,7 @@ void BPM::print(What what, How how)
 
     if (what == What::Data)
     {
-        _print(9, 1, 3, __config.bpm);
+        _print(9, 1, 3, __looper.bpm);
     }
 }
 

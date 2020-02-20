@@ -7,12 +7,11 @@
 namespace arpegguino
 {
 
-extern LiquidCrystal __lcd;
-
-extern controlino::Selector __selector;
-extern controlino::Multiplexer __multiplexer;
-
-extern midiate::Looper::Config __config;
+extern LiquidCrystal            __lcd;
+extern controlino::Selector     __selector;
+extern controlino::Multiplexer  __multiplexer;
+extern midiate::Looper          __looper;
+extern midiate::Layer::Config * __config;
 
 } // arpegguino
 

@@ -20,7 +20,7 @@ Action Perm::check()
 
 void Perm::update()
 {
-    __config.perm = (__config.perm + 1) % midiate::style::count(__config.steps);
+    __config->style.perm = (__config->style.perm + 1) % midiate::style::count(__config->style.steps);
 }
 
 INIT_CONFIGURER(Perm);

@@ -22,7 +22,7 @@ Action Octave::check()
 
 void Octave::update()
 {
-    __config.octave = (__config.octave % 7) + 1;
+    __config->octave = (__config->octave % 7) + 1;
 }
 
 INIT_CONFIGURER(Octave);
@@ -42,7 +42,7 @@ void Octave::print(What what, How how)
     }
     else if (what == What::Data)
     {
-        _print(4, 0, __config.octave);
+        _print(4, 0, __config->octave);
     }
 }
 

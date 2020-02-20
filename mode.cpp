@@ -20,7 +20,7 @@ Action Mode::check()
 
 void Mode::update()
 {
-    __config.mode = (midiate::Mode)(((unsigned)__config.mode + 1) % (unsigned)midiate::Mode::Count);
+    __config->mode = (midiate::Mode)(((unsigned)__config->mode + 1) % (unsigned)midiate::Mode::Count);
 }
 
 INIT_CONFIGURER(Mode);
@@ -35,7 +35,7 @@ void Mode::print(What what, How how)
     if (what == What::Data)
     {
         midiate::mode::Name name;
-        midiate::mode::name(__config.mode, /* out */ name);
+        midiate::mode::name(__config->mode, /* out */ name);
 
         if (how == How::Summary)
         {

@@ -20,7 +20,7 @@ Action Rhythm::check()
 
 void Rhythm::update()
 {
-    __config.rhythm = (midiate::Rhythm)(((unsigned)__config.rhythm + 1) % (unsigned)midiate::Rhythm::Count);
+    __config->rhythm = (midiate::Rhythm)(((unsigned)__config->rhythm + 1) % (unsigned)midiate::Rhythm::Count);
 }
 
 INIT_CONFIGURER(Rhythm);
@@ -40,7 +40,7 @@ void Rhythm::print(What what, How how)
         }
         else if (what == What::Data)
         {
-            _print(5, 1, 2, (unsigned)__config.rhythm + 1);
+            _print(5, 1, 2, (unsigned)__config->rhythm + 1);
         }
     }
     else if (how == How::Focus)
@@ -51,10 +51,10 @@ void Rhythm::print(What what, How how)
         }
         else if (what == What::Data)
         {
-            _print(8, 0, 2, (unsigned)__config.rhythm + 1);
+            _print(8, 0, 2, (unsigned)__config->rhythm + 1);
 
             midiate::rhythm::Description desc;
-            midiate::rhythm::description(__config.rhythm, /* out */ desc);
+            midiate::rhythm::description(__config->rhythm, /* out */ desc);
             _print(0, 1, desc);
         }
     }

@@ -5,27 +5,8 @@
 namespace arpegguino
 {
 
-LiquidCrystal __lcd(pin::LCD::RS, pin::LCD::E, pin::LCD::D4, pin::LCD::D5, pin::LCD::D6, pin::LCD::D7);
-
-controlino::Selector __selector(pin::selector::S0, pin::selector::S1, pin::selector::S2, pin::selector::S3);
-controlino::Multiplexer __multiplexer(pin::multiplexer::SIG, __selector);
-
-midiate::Looper::Config __config = {
-    .note       = midiate::Note::C,
-    .accidental = midiate::Accidental::Natural,
-    .octave     = 3,
-    .mode       = midiate::Mode::Ionian,
-    .bpm        = 60,
-    .rhythm     = midiate::Rhythm::_7,
-    .steps      = 3,
-    .perm       = 0,
-    .looped     = false,
-};
-
 namespace
 {
-
-midiate::Looper __looper(__config);
 
 struct Component
 {
@@ -50,6 +31,12 @@ struct
 } __focused;
 
 unsigned long __flashing = -1;
+
+struct
+{
+    midiate::Layer * layer = nullptr;
+    unsigned long millis = -1;
+} __layer;
 
 namespace control
 {
@@ -88,6 +75,13 @@ void summary(viewer::Base * viewer = nullptr) // 'nullptr' means all configurers
             component.viewer.print(viewer::What::Title, viewer::How::Summary);
             component.viewer.print(viewer::What::Data, viewer::How::Summary);
         }
+
+        if (__layer.layer != nullptr)
+        {
+            __lcd.setCursor(11, 0);
+            __lcd.print('L');
+            __lcd.print((unsigned)__layer.layer->tag);
+        }
     }
     else
     {
@@ -125,6 +119,40 @@ void bar(int i) // i of (-1) clears the bar from the screen
     }
 }
 
+void layer(midiate::Layer * layer) // nullptr means go back to global
+{
+    if (__layer.layer == layer)
+    {
+        return; // nothing to do
+    }
+
+    __layer.layer = layer;
+
+    if (layer == nullptr)
+    {
+        __layer.millis = -1;
+        __config = &__looper.config; // go back global configuration
+    }
+    else
+    {
+        __layer.millis = millis();
+
+        if (layer->configured == midiate::Layer::Configured::Dynamic)
+        {
+            layer->config = __looper.config; // set the layer's configuration to the global one
+        }
+
+        __config = &layer->config;
+    }
+
+    control::summary();
+}
+
+void global()
+{
+    layer(nullptr);
+}
+
 } // control
 
 namespace handle
@@ -158,6 +186,11 @@ void focus()
         return;
     }
 
+    if (__layer.layer != nullptr)
+    {
+        __layer.millis = millis();
+    }
+
     control::summary();
 }
 
@@ -172,9 +205,21 @@ void components()
             continue;
         }
 
+        const auto layered = (__layer.layer != nullptr) && (&component.configurer != &configurer::__BPM); // all configurers but BPM are per layer
+
+        if (layered)
+        {
+            __layer.millis = millis();
+        }
+
         if ((action == configurer::Action::Summary && __focused.viewer == nullptr) ||
             (action == configurer::Action::Focus && __focused.viewer == &component.viewer))
         {
+            if (layered && __layer.layer->configured == midiate::Layer::Configured::Dynamic)
+            {
+                __layer.layer->configured = midiate::Layer::Configured::Static;
+            }
+
             component.configurer.update();
         }
 
@@ -193,12 +238,10 @@ void keys()
 {
     struct Key : public controlino::Key
     {
-        Key(char pin) :
-            controlino::Key(__multiplexer, pin),
-            tag(-1)
+        Key(char pin) : controlino::Key(__multiplexer, pin)
         {}
 
-        char tag;
+        char tag = -1;
     };
 
     static Key __keys[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
@@ -208,6 +251,13 @@ void keys()
         auto & key = __keys[i];
 
         const auto event = key.check();
+
+        if (event == Key::Event::None)
+        {
+            continue;
+        }
+
+        control::global(); // go back to global configutarion when playing new layers
 
         if (event == Key::Event::Down)
         {
@@ -229,12 +279,6 @@ void record()
     static auto __button = Button(__multiplexer, pin::Record);
 
     const auto event = __button.check();
-
-    if (event == Button::Event::None)
-    {
-        return;
-    }
-
     const auto state = __looper.state;
 
     if (event == Button::Event::Click)
@@ -260,8 +304,68 @@ void record()
     {
         __looper.state = Looper::State::Wander;
     }
+    else
+    {
+        return;
+    }
 
+    control::global();
     control::record(__looper.state == Looper::State::Record || __looper.state == Looper::State::Overlay);
+}
+
+void layer()
+{
+    if (__layer.layer != nullptr && millis() - __layer.millis >= 6000)
+    {
+        control::global();
+    }
+    else
+    {
+        static auto __key = controlino::Key(pin::Layer);
+
+        const auto event = __key.check();
+
+        if (event == controlino::Key::Event::Down)
+        {
+            if (__focused.viewer != nullptr)
+            {
+                control::summary();
+            }
+            else
+            {
+                constexpr static unsigned __count = sizeof(midiate::Looper::layers) / sizeof(midiate::Layer);
+
+                static char __index = 0;
+
+                if (__layer.layer == nullptr || __index >= __count)
+                {
+                    __index = 0; // search from the start again
+                }
+
+                midiate::Layer * layer = nullptr;
+
+                while (__index < __count)
+                {
+                    midiate::Layer * const prospect = __looper.layers + __index++;
+
+                    if (prospect->tag != -1)
+                    {
+                        layer = prospect;
+                        break;
+                    }
+                }
+
+                if (layer == nullptr)
+                {
+                    control::global();
+                }
+                else
+                {
+                    control::layer(layer);
+                }
+            }
+        }
+    }
 }
 
 } // handle
@@ -273,6 +377,7 @@ void interrupt()
     handle::components();
     handle::keys();
     handle::record();
+    handle::layer();
 }
 
 } //

@@ -20,19 +20,19 @@ Action Steps::check()
 
 void Steps::update()
 {
-    if (__config.looped == false)
+    if (__config->style.looped == false)
     {
-        __config.looped = true;
+        __config->style.looped = true;
     }
     else
     {
-        if (++__config.steps == 7)
+        if (++__config->style.steps == 7)
         {
-            __config.steps = 3;
+            __config->style.steps = 3;
         }
 
-        __config.perm = 0;
-        __config.looped = false;
+        __config->style.perm = 0;
+        __config->style.looped = false;
     }
 }
 
