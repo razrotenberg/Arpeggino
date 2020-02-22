@@ -121,10 +121,12 @@ void bar(int i) // i of (-1) clears the bar from the screen
 
 void layer(midiate::Layer * layer) // nullptr means go back to global
 {
-    if (__layer.layer == layer)
+    if (__layer.layer == nullptr && layer == nullptr)
     {
         return; // nothing to do
     }
+
+    // we allow setting the same layer for updating its config and the timer
 
     __layer.layer = layer;
 
@@ -321,11 +323,11 @@ void layer()
     }
     else
     {
-        static auto __key = controlino::Key(pin::Layer);
+        static auto __button = controlino::Button(pin::Layer);
 
-        const auto event = __key.check();
+        const auto event = __button.check();
 
-        if (event == controlino::Key::Event::Down)
+        if (event == controlino::Button::Event::Click)
         {
             if (__focused.viewer != nullptr)
             {
@@ -364,6 +366,30 @@ void layer()
                     control::layer(layer);
                 }
             }
+        }
+        else if (event == controlino::Button::Event::Press)
+        {
+            if (__layer.layer != nullptr && __layer.layer->configured == midiate::Layer::Configured::Static)
+            {
+                __layer.layer->configured = midiate::Layer::Configured::Dynamic;
+
+                // reprint the new (global) configuration
+                control::layer(__layer.layer);
+            }
+        }
+        else if (event == controlino::Button::Event::ClickPress)
+        {
+            for (auto & layer : __looper.layers)
+            {
+                if (layer.tag == -1)
+                {
+                    continue; // unused layer
+                }
+
+                layer.configured = midiate::Layer::Configured::Dynamic;
+            }
+
+            control::global();
         }
     }
 }
