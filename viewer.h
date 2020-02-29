@@ -66,5 +66,5 @@ VIEWER(Rhythm);
 
 #define INIT_VIEWER(name) name __ ## name
 
-} // arpegguino
 } // viewer
+} // arpegguino

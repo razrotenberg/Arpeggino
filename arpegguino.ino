@@ -41,6 +41,9 @@ struct
 namespace control
 {
 
+namespace ui
+{
+
 void record(bool recording)
 {
     digitalWrite(pin::LED::Record, recording ? HIGH : LOW);
@@ -56,6 +59,11 @@ void flash()
     digitalWrite(pin::LED::Flash, HIGH);
     __flashing = millis();
 }
+
+} // ui
+
+namespace view
+{
 
 void summary(viewer::Base * viewer = nullptr) // 'nullptr' means all configurers
 {
@@ -119,6 +127,11 @@ void bar(int i) // i of (-1) clears the bar from the screen
     }
 }
 
+} // view
+
+namespace config
+{
+
 void layer(midiate::Layer * layer) // nullptr means go back to global
 {
     if (__layer.layer == nullptr && layer == nullptr)
@@ -147,13 +160,15 @@ void layer(midiate::Layer * layer) // nullptr means go back to global
         __config = &layer->config;
     }
 
-    control::summary();
+    control::view::summary();
 }
 
 void global()
 {
     layer(nullptr);
 }
+
+} // config
 
 } // control
 
@@ -193,7 +208,7 @@ void focus()
         __layer.millis = millis();
     }
 
-    control::summary();
+    control::view::summary();
 }
 
 void components()
@@ -227,11 +242,11 @@ void components()
 
         if (action == configurer::Action::Summary)
         {
-            control::summary(&component.viewer);
+            control::view::summary(&component.viewer);
         }
         else if (action == configurer::Action::Focus)
         {
-            control::focus(component.viewer);
+            control::view::focus(component.viewer);
         }
     }
 }
@@ -259,7 +274,7 @@ void keys()
             continue;
         }
 
-        control::global(); // go back to global configutarion when playing new layers
+        control::config::global(); // go back to global configutarion when playing new layers
 
         if (event == Key::Event::Down)
         {
@@ -318,15 +333,15 @@ void record()
         return;
     }
 
-    control::global();
-    control::record(__looper.state == Looper::State::Record || __looper.state == Looper::State::Overlay);
+    control::config::global();
+    control::ui::record(__looper.state == Looper::State::Record || __looper.state == Looper::State::Overlay);
 }
 
 void layer()
 {
     if (__layer.layer != nullptr && millis() - __layer.millis >= 6000)
     {
-        control::global();
+        control::config::global();
     }
     else
     {
@@ -338,7 +353,7 @@ void layer()
         {
             if (__focused.viewer != nullptr)
             {
-                control::summary();
+                control::view::summary();
             }
             else
             {
@@ -366,11 +381,11 @@ void layer()
 
                 if (layer == nullptr)
                 {
-                    control::global();
+                    control::config::global();
                 }
                 else
                 {
-                    control::layer(layer);
+                    control::config::layer(layer);
                 }
             }
         }
@@ -381,7 +396,7 @@ void layer()
                 __layer.layer->configured = midiate::Layer::Configured::Dynamic;
 
                 // reprint the new (global) configuration
-                control::layer(__layer.layer);
+                control::config::layer(__layer.layer);
             }
         }
         else if (event == controlino::Button::Event::ClickPress)
@@ -396,7 +411,7 @@ void layer()
                 layer.configured = midiate::Layer::Configured::Dynamic;
             }
 
-            control::global();
+            control::config::global();
         }
     }
 }
@@ -428,7 +443,7 @@ void setup()
     pinMode(pin::LED::Flash, OUTPUT);
     pinMode(pin::LED::Record, OUTPUT);
 
-    arpegguino::control::summary();
+    arpegguino::control::view::summary();
 }
 
 void loop()
@@ -437,12 +452,12 @@ void loop()
         {
             if (bar != -1)
             {
-                arpegguino::control::flash();
+                arpegguino::control::ui::flash();
             }
 
             if (arpegguino::__focused.viewer == nullptr)
             {
-                arpegguino::control::bar(bar);
+                arpegguino::control::view::bar(bar);
             }
         });
 }
