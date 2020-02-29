@@ -300,7 +300,14 @@ void record()
     }
     else if (event == Button::Event::Press)
     {
-        __looper.undo();
+        char tag = -1; // last recorded layer
+
+        if (__layer.layer != nullptr)
+        {
+            tag = __layer.layer->tag;
+        }
+
+        __looper.revoke(tag);
     }
     else if (event == Button::Event::ClickPress)
     {
