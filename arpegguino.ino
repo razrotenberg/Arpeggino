@@ -1,4 +1,5 @@
 #include "internal.h"
+#include "timer.h"
 
 #include <TimerOne.h>
 
@@ -24,18 +25,16 @@ Component __components[] = {
     { configurer::__Rhythm, viewer::__Rhythm },
 };
 
-struct
+struct : Timer
 {
     viewer::Base * viewer = nullptr;
-    unsigned long millis = -1;
 } __focused;
 
-unsigned long __flashing = -1;
+Timer __flashing;
 
-struct
+struct : Timer
 {
     midiate::Layer * layer = nullptr;
-    unsigned long millis = -1;
 } __layer;
 
 namespace control
@@ -51,13 +50,13 @@ void record(bool recording)
 
 void flash()
 {
-    if (__flashing != -1)
+    if (__flashing.ticking())
     {
-        return;
+        return; // already flashing
     }
 
     digitalWrite(pin::LED::Flash, HIGH);
-    __flashing = millis();
+    __flashing.start();
 }
 
 } // ui
@@ -69,11 +68,11 @@ void summary(viewer::Base * viewer = nullptr) // 'nullptr' means all components
 {
     if (__focused.viewer != nullptr) // some viewer is in focus currently
     {
-        __focused.millis = -1;
+        __focused.stop();
         __focused.viewer = nullptr;
         __lcd.clear();
 
-        viewer = nullptr; // print all titles and values
+        viewer = nullptr; // mark to print all titles and values
     }
 
     if (viewer == nullptr)
@@ -117,7 +116,7 @@ void focus(viewer::Base & viewer)
     }
 
     __focused.viewer->print(viewer::What::Data, viewer::How::Focus);
-    __focused.millis = millis();
+    __focused.start();
 }
 
 void bar(int i) // i of (-1) clears the bar from the screen
@@ -155,12 +154,12 @@ void layer(midiate::Layer * layer) // nullptr means go back to global
 
     if (layer == nullptr)
     {
-        __layer.millis = -1;
+        __layer.stop();
         __config = &__looper.config; // go back global configuration
     }
     else
     {
-        __layer.millis = millis();
+        __layer.start();
 
         if (layer->configured == midiate::Layer::Configured::Dynamic)
         {
@@ -187,36 +186,23 @@ namespace handle
 
 void flashing()
 {
-    if (__flashing == -1)
-    {
-        return;
-    }
-
-    if (millis() - __flashing < 70)
+    if (!__flashing.elapsed(70))
     {
         return;
     }
 
     digitalWrite(LED_BUILTIN, LOW);
-    __flashing = -1;
+    __flashing.stop();
 }
 
 void focus()
 {
-    if (__focused.millis == -1)
+    if (!__focused.elapsed(3200))
     {
         return;
     }
 
-    if (millis() - __focused.millis < 3200)
-    {
-        return;
-    }
-
-    if (__layer.layer != nullptr)
-    {
-        __layer.millis = millis();
-    }
+    __layer.reset();
 
     control::view::summary();
 }
@@ -236,7 +222,7 @@ void components()
 
         if (layered)
         {
-            __layer.millis = millis();
+            __layer.start();
         }
 
         if ((action == configurer::Action::Summary && __focused.viewer == nullptr) ||
@@ -349,7 +335,7 @@ void record()
 
 void layer()
 {
-    if (__layer.layer != nullptr && millis() - __layer.millis >= 6000)
+    if (__layer.elapsed(6000))
     {
         control::config::global();
     }
@@ -363,7 +349,8 @@ void layer()
         {
             if (__focused.viewer != nullptr)
             {
-                control::view::summary();
+                // go back tp summary view while keeping the same layer and resetting the timer
+                control::config::layer(__layer.layer);
             }
             else
             {
