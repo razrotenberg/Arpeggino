@@ -18,7 +18,7 @@ void Style::print(What what, How how)
         {
             _print(7, 0, (unsigned)__config->style.steps);
             _print(8, 0, __config->style.looped ? '+' : '-');
-            _print(9, 0, 4, (unsigned)__config->style.perm + 1);
+            _print(9, 0, 3, (unsigned)__config->style.perm + 1);
         }
     }
     else if (how == How::Focus)
@@ -31,7 +31,7 @@ void Style::print(What what, How how)
         {
             _print(7, 0, (unsigned)__config->style.steps);
             _print(8, 0, __config->style.looped ? '+' : '-');
-            _print(9, 0, 4, (unsigned)__config->style.perm + 1);
+            _print(9, 0, 3, (unsigned)__config->style.perm + 1);
 
             midiate::style::Description desc;
             midiate::style::description(__config->style.steps, __config->style.perm, /* out */ desc);

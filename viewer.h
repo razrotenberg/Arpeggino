@@ -48,7 +48,7 @@ protected:
 };
 
 #define VIEWER(name)                                \
-    struct name : public Base                       \
+    struct name : Base                              \
     {                                               \
         void print(What what, How how) override;    \
     };                                              \

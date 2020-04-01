@@ -4,6 +4,8 @@
 
 #define MUXED(x) x // just for clearity
 
+namespace arpegguino
+{
 namespace pin
 {
 
@@ -61,3 +63,4 @@ constexpr auto Perm   = MUXED(13);
 } // configure
 
 } // pin
+} // arpegguino

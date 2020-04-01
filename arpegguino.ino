@@ -65,7 +65,7 @@ void flash()
 namespace view
 {
 
-void summary(viewer::Base * viewer = nullptr) // 'nullptr' means all configurers
+void summary(viewer::Base * viewer = nullptr) // 'nullptr' means all components
 {
     if (__focused.viewer != nullptr) // some viewer is in focus currently
     {
@@ -84,11 +84,21 @@ void summary(viewer::Base * viewer = nullptr) // 'nullptr' means all configurers
             component.viewer.print(viewer::What::Data, viewer::How::Summary);
         }
 
+        // layers and bars
+
+        __lcd.setCursor(13, 0);
+
+        char written = 0;
+
         if (__layer.layer != nullptr)
         {
-            __lcd.setCursor(11, 0);
-            __lcd.print('L');
-            __lcd.print((unsigned)__layer.layer->tag);
+            written += __lcd.print('L');
+            written += __lcd.print((unsigned)__layer.layer->tag);
+        }
+
+        while (written++ < 3)
+        {
+            __lcd.write(' ');
         }
     }
     else
@@ -430,34 +440,34 @@ void interrupt()
 
 } //
 
-} // arpegguino
-
-void setup()
+extern "C" void setup()
 {
     Serial.begin(9600);
-    arpegguino::__lcd.begin(16, 2);
+    __lcd.begin(16, 2);
 
     Timer1.initialize(10000); // 10000us = 10ms
-    Timer1.attachInterrupt(arpegguino::interrupt);
+    Timer1.attachInterrupt(interrupt);
 
     pinMode(pin::LED::Flash, OUTPUT);
     pinMode(pin::LED::Record, OUTPUT);
 
-    arpegguino::control::view::summary();
+    control::view::summary();
 }
 
-void loop()
+extern "C" void loop()
 {
-    arpegguino::__looper.run([](int bar)
+    __looper.run([](int bar)
         {
             if (bar != -1)
             {
-                arpegguino::control::ui::flash();
+                control::ui::flash();
             }
 
-            if (arpegguino::__focused.viewer == nullptr)
+            if (__focused.viewer == nullptr && __layer.layer == nullptr)
             {
-                arpegguino::control::view::bar(bar);
+                control::view::bar(bar);
             }
         });
 }
+
+} // arpegguino
