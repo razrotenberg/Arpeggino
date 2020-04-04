@@ -8,11 +8,11 @@ namespace arpegguino
 namespace configurer
 {
 
-static auto __potentiometer = controlino::Potentiometer(pin::configure::BPM);
+static auto __potentiometer = controlino::Potentiometer<20, 230>(pin::configure::BPM);
 
 Action BPM::check()
 {
-    if (__potentiometer.check<20, 230>() != -1)
+    if (__potentiometer.check() == controlino::Potentiometer<20, 230>::Event::Changed)
     {
         return Action::Summary;
     }
@@ -22,7 +22,7 @@ Action BPM::check()
 
 void BPM::update()
 {
-    __looper.bpm = __potentiometer.read<20, 230>();
+    __looper.bpm = __potentiometer.read();
 }
 
 INIT_CONFIGURER(BPM);
