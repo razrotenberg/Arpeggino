@@ -43,8 +43,13 @@ namespace control
 namespace ui
 {
 
-void record(bool recording)
+void record()
 {
+    const auto recording = \
+        __looper.state == midier::Looper::State::Prerecord  ||
+        __looper.state == midier::Looper::State::Record     ||
+        __looper.state == midier::Looper::State::Overlay;
+
     digitalWrite(pin::LED::Record, recording ? HIGH : LOW);
 }
 
@@ -298,7 +303,19 @@ void record()
     {
         if (state == Looper::State::Wander)
         {
-            __looper.state = Looper::State::Record;
+            // we want to set the state to `Prerecord` if there are no layers at the moment,
+            // so `__looper` will start recording when the first layer will be played
+            __looper.state = Looper::State::Prerecord;
+
+            for (auto & layer : __looper.layers)
+            {
+                if (layer.tag != -1)
+                {
+                    // start recording immediately if there's a layer playing at the moment
+                    __looper.state = Looper::State::Record;
+                    break;
+                }
+            }
         }
         else if (state == Looper::State::Record || state == Looper::State::Overlay)
         {
@@ -330,7 +347,7 @@ void record()
     }
 
     control::config::global();
-    control::ui::record(__looper.state == Looper::State::Record || __looper.state == Looper::State::Overlay);
+    control::ui::record();
 }
 
 void layer()
