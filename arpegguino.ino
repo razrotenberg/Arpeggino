@@ -405,12 +405,33 @@ void layer()
         }
         else if (event == controlino::Button::Event::Press)
         {
-            if (__layer.layer != nullptr && __layer.layer->configured == midier::Layer::Configured::Static)
+            if (__layer.layer != nullptr) // a layer is selected
             {
-                __layer.layer->configured = midier::Layer::Configured::Dynamic;
+                if (__layer.layer->configured == midier::Layer::Configured::Static)
+                {
+                    __layer.layer->configured = midier::Layer::Configured::Dynamic;
 
-                // reprint the new (global) configuration
-                control::config::layer(__layer.layer);
+                    // reprint the new (global) configuration
+                    control::config::layer(__layer.layer);
+                }
+            }
+            else // no layer is selected
+            {
+                // making all previous dynamic layers static
+
+                for (auto & layer : __looper.layers)
+                {
+                    if (layer.tag == -1)
+                    {
+                        continue; // unused layer
+                    }
+
+                    if (layer.configured == midier::Layer::Configured::Dynamic)
+                    {
+                        layer.config = __looper.config; // set the layer's configuration the the corrent global one
+                        layer.configured = midier::Layer::Configured::Static; // mark it as statically configured
+                    }
+                }
             }
         }
         else if (event == controlino::Button::Event::ClickPress)
