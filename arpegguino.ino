@@ -34,7 +34,7 @@ Timer __flashing;
 
 struct : Timer
 {
-    midiate::Layer * layer = nullptr;
+    midier::Layer * layer = nullptr;
 } __layer;
 
 namespace control
@@ -141,7 +141,7 @@ void bar(int i) // i of (-1) clears the bar from the screen
 namespace config
 {
 
-void layer(midiate::Layer * layer) // nullptr means go back to global
+void layer(midier::Layer * layer) // nullptr means go back to global
 {
     if (__layer.layer == nullptr && layer == nullptr)
     {
@@ -161,7 +161,7 @@ void layer(midiate::Layer * layer) // nullptr means go back to global
     {
         __layer.start();
 
-        if (layer->configured == midiate::Layer::Configured::Dynamic)
+        if (layer->configured == midier::Layer::Configured::Dynamic)
         {
             layer->config = __looper.config; // set the layer's configuration to the global one
         }
@@ -228,9 +228,9 @@ void components()
         if ((action == configurer::Action::Summary && __focused.viewer == nullptr) ||
             (action == configurer::Action::Focus && __focused.viewer == &component.viewer))
         {
-            if (layered && __layer.layer->configured == midiate::Layer::Configured::Dynamic)
+            if (layered && __layer.layer->configured == midier::Layer::Configured::Dynamic)
             {
-                __layer.layer->configured = midiate::Layer::Configured::Static;
+                __layer.layer->configured = midier::Layer::Configured::Static;
             }
 
             component.configurer.update();
@@ -287,7 +287,7 @@ void keys()
 void record()
 {
     using controlino::Button;
-    using midiate::Looper;
+    using midier::Looper;
 
     static auto __button = Button(__multiplexer, pin::Record);
 
@@ -354,7 +354,7 @@ void layer()
             }
             else
             {
-                constexpr static unsigned __count = sizeof(midiate::Looper::layers) / sizeof(midiate::Layer);
+                constexpr static unsigned __count = sizeof(midier::Looper::layers) / sizeof(midier::Layer);
 
                 static char __index = 0;
 
@@ -363,11 +363,11 @@ void layer()
                     __index = 0; // search from the start again
                 }
 
-                midiate::Layer * layer = nullptr;
+                midier::Layer * layer = nullptr;
 
                 while (__index < __count)
                 {
-                    midiate::Layer * const prospect = __looper.layers + __index++;
+                    midier::Layer * const prospect = __looper.layers + __index++;
 
                     if (prospect->tag != -1)
                     {
@@ -388,9 +388,9 @@ void layer()
         }
         else if (event == controlino::Button::Event::Press)
         {
-            if (__layer.layer != nullptr && __layer.layer->configured == midiate::Layer::Configured::Static)
+            if (__layer.layer != nullptr && __layer.layer->configured == midier::Layer::Configured::Static)
             {
-                __layer.layer->configured = midiate::Layer::Configured::Dynamic;
+                __layer.layer->configured = midier::Layer::Configured::Dynamic;
 
                 // reprint the new (global) configuration
                 control::config::layer(__layer.layer);
@@ -405,7 +405,7 @@ void layer()
                     continue; // unused layer
                 }
 
-                layer.configured = midiate::Layer::Configured::Dynamic;
+                layer.configured = midier::Layer::Configured::Dynamic;
             }
 
             control::config::global();

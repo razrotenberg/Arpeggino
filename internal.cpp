@@ -12,8 +12,8 @@ controlino::Selector __selector(
 controlino::Multiplexer __multiplexer(
     pin::multiplexer::SIG, __selector);
 
-midiate::Looper __looper;
+midier::Looper __looper;
 
-midiate::Layer::Config * __config = &__looper.config;
+midier::Layer::Config * __config = &__looper.config;
 
 } // arpegguino

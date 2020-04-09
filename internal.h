@@ -2,7 +2,7 @@
 
 #include <Controlino.h>
 #include <LiquidCrystal.h>
-#include <Midiate.h>
+#include <Midier.h>
 
 namespace arpegguino
 {
@@ -10,8 +10,8 @@ namespace arpegguino
 extern LiquidCrystal            __lcd;
 extern controlino::Selector     __selector;
 extern controlino::Multiplexer  __multiplexer;
-extern midiate::Looper          __looper;
-extern midiate::Layer::Config * __config;
+extern midier::Looper           __looper;
+extern midier::Layer::Config *  __config;
 
 } // arpegguino
 

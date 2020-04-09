@@ -33,8 +33,8 @@ void Style::print(What what, How how)
             _print(8, 0, __config->style.looped ? '+' : '-');
             _print(9, 0, 3, (unsigned)__config->style.perm + 1);
 
-            midiate::style::Description desc;
-            midiate::style::description(__config->style.steps, __config->style.perm, /* out */ desc);
+            midier::style::Description desc;
+            midier::style::description(__config->style.steps, __config->style.perm, /* out */ desc);
             _print(0, 1, 16, desc); // all columns in the LCD
 
             if (__config->style.looped)
