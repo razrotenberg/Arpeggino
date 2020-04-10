@@ -254,12 +254,12 @@ void components()
 
 void keys()
 {
-    struct Key : public controlino::Key
+    struct Key : controlino::Key
     {
         Key(char pin) : controlino::Key(__multiplexer, pin)
         {}
 
-        char tag = -1;
+        midier::Layer::Tag tag = -1;
     };
 
     static Key __keys[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
@@ -319,7 +319,7 @@ void record()
     }
     else if (event == Button::Event::Press)
     {
-        char tag = -1; // last recorded layer
+        midier::Layer::Tag tag = -1; // last recorded layer
 
         if (__layer.layer != nullptr)
         {
