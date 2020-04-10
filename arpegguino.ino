@@ -160,7 +160,7 @@ void layer(midier::Layer * layer) // nullptr means go back to global
     if (layer == nullptr)
     {
         __layer.stop();
-        __config = &__looper.config; // go back global configuration
+        __config = &midier::Config::global(); // go back global configuration
     }
     else
     {
@@ -168,7 +168,7 @@ void layer(midier::Layer * layer) // nullptr means go back to global
 
         if (layer->configured == midier::Layer::Configured::Dynamic)
         {
-            layer->config = __looper.config; // set the layer's configuration to the global one
+            layer->config = midier::Config::global(); // set the layer's configuration to the global one
         }
 
         __config = &layer->config;
@@ -428,7 +428,7 @@ void layer()
 
                     if (layer.configured == midier::Layer::Configured::Dynamic)
                     {
-                        layer.config = __looper.config; // set the layer's configuration the the corrent global one
+                        layer.config = midier::Config::global(); // set the layer's configuration the the corrent global one
                         layer.configured = midier::Layer::Configured::Static; // mark it as statically configured
                     }
                 }

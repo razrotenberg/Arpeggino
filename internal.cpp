@@ -14,6 +14,6 @@ controlino::Multiplexer __multiplexer(
 
 midier::Looper __looper;
 
-midier::Layer::Config * __config = &__looper.config;
+midier::Config * __config = &midier::Config::global();
 
 } // arpegguino
