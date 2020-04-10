@@ -124,15 +124,15 @@ void focus(viewer::Base & viewer)
     __focused.start();
 }
 
-void bar(int i) // i of (-1) clears the bar from the screen
+void bar(midier::Looper::Bar bar)
 {
     __lcd.setCursor(14, 0);
 
     char written = 0;
 
-    if (i != -1)
+    if (bar != midier::Looper::Bar::None)
     {
-        written = __lcd.print(i + 1, DEC);
+        written = __lcd.print((unsigned)bar, DEC);
     }
 
     while (written++ < 2)
@@ -305,17 +305,8 @@ void record()
         {
             // we want to set the state to `Prerecord` if there are no layers at the moment,
             // so `__looper` will start recording when the first layer will be played
-            __looper.state = Looper::State::Prerecord;
-
-            for (auto & layer : __looper.layers)
-            {
-                if (layer.tag != -1)
-                {
-                    // start recording immediately if there's a layer playing at the moment
-                    __looper.state = Looper::State::Record;
-                    break;
-                }
-            }
+            // we want to start recording immediately if there's a layer playing at the moment
+            __looper.state = __looper.layers.idle() ? Looper::State::Prerecord : Looper::State::Record;
         }
         else if (state == Looper::State::Record || state == Looper::State::Overlay)
         {
@@ -371,7 +362,7 @@ void layer()
             }
             else
             {
-                constexpr static unsigned __count = sizeof(midier::Looper::layers) / sizeof(midier::Layer);
+                static const auto __count = __looper.layers.count();
 
                 static char __index = 0;
 
@@ -384,11 +375,11 @@ void layer()
 
                 while (__index < __count)
                 {
-                    midier::Layer * const prospect = __looper.layers + __index++;
+                    midier::Layer & prospect = __looper.layers[__index++];
 
-                    if (prospect->tag != -1)
+                    if (prospect.tag != -1)
                     {
-                        layer = prospect;
+                        layer = &prospect;
                         break;
                     }
                 }
@@ -419,32 +410,24 @@ void layer()
             {
                 // making all previous dynamic layers static
 
-                for (auto & layer : __looper.layers)
-                {
-                    if (layer.tag == -1)
+                __looper.layers.eval([](midier::Layer & layer)
                     {
-                        continue; // unused layer
-                    }
-
-                    if (layer.configured == midier::Layer::Configured::Dynamic)
-                    {
-                        layer.config = midier::Config::global(); // set the layer's configuration the the corrent global one
-                        layer.configured = midier::Layer::Configured::Static; // mark it as statically configured
-                    }
-                }
+                        if (layer.configured == midier::Layer::Configured::Dynamic)
+                        {
+                            layer.config = midier::Config::global(); // set the layer's configuration the the corrent global one
+                            layer.configured = midier::Layer::Configured::Static; // mark it as statically configured
+                        }
+                    });
             }
         }
         else if (event == controlino::Button::Event::ClickPress)
         {
-            for (auto & layer : __looper.layers)
-            {
-                if (layer.tag == -1)
-                {
-                    continue; // unused layer
-                }
+            // set all layers to dynamically configured
 
-                layer.configured = midier::Layer::Configured::Dynamic;
-            }
+            __looper.layers.eval([](midier::Layer & layer)
+                {
+                    layer.configured = midier::Layer::Configured::Dynamic;
+                });
 
             control::config::global();
         }
@@ -481,18 +464,26 @@ extern "C" void setup()
 
 extern "C" void loop()
 {
-    __looper.run([](int bar)
-        {
-            if (bar != -1)
-            {
-                control::ui::flash();
-            }
+    // we disable interrupts because we don't want any user actions to interfere the main logic
+    // no methods of `midier::Looper` can be called while `midier::Looper::click()` is running
+    noInterrupts();
 
-            if (__focused.viewer == nullptr && __layer.layer == nullptr)
-            {
-                control::view::bar(bar);
-            }
-        });
+    const auto bar = __looper.click();
+
+    if (bar != midier::Looper::Bar::Same)
+    {
+        control::ui::flash();
+
+        if (__focused.viewer == nullptr && __layer.layer == nullptr)
+        {
+            control::view::bar(bar);
+        }
+    }
+
+    // enable interrupts as we are done with the main logic and no need for locks anymore
+    interrupts();
+
+    delay(60.f / static_cast<float>(__bpm) * 1000.f / static_cast<float>(midier::Time::Subdivisions));
 }
 
 } // arpegguino
