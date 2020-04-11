@@ -1,8 +1,6 @@
 #include "internal.h"
 #include "timer.h"
 
-#include <TimerOne.h>
-
 namespace arpegguino
 {
 
@@ -436,25 +434,12 @@ void layer()
 
 } // handle
 
-void interrupt()
-{
-    handle::flashing();
-    handle::focus();
-    handle::components();
-    handle::keys();
-    handle::record();
-    handle::layer();
-}
-
 } //
 
 extern "C" void setup()
 {
     Serial.begin(9600);
     __lcd.begin(16, 2);
-
-    Timer1.initialize(10000); // 10000us = 10ms
-    Timer1.attachInterrupt(interrupt);
 
     pinMode(pin::LED::Flash, OUTPUT);
     pinMode(pin::LED::Record, OUTPUT);
@@ -464,26 +449,35 @@ extern "C" void setup()
 
 extern "C" void loop()
 {
-    // we disable interrupts because we don't want any user actions to interfere the main logic
-    // no methods of `midier::Looper` can be called while `midier::Looper::click()` is running
-    noInterrupts();
+    handle::flashing();
+    handle::focus();
+    handle::components();
+    handle::keys();
+    handle::record();
+    handle::layer();
 
-    const auto bar = __looper.click();
+    static Timer __timer;
 
-    if (bar != midier::Looper::Bar::Same)
+    const auto bps = (float)__bpm / 60.f;
+    const auto mspb = 1000.f / bps;
+    const auto msps = mspb / (float)midier::Time::Subdivisions;
+
+    if (!__timer.ticking() || __timer.elapsed(msps))
     {
-        control::ui::flash();
+        const auto bar = __looper.click();
 
-        if (__focused.viewer == nullptr && __layer.layer == nullptr)
+        if (bar != midier::Looper::Bar::Same)
         {
-            control::view::bar(bar);
+            control::ui::flash();
+
+            if (__focused.viewer == nullptr && __layer.layer == nullptr)
+            {
+                control::view::bar(bar);
+            }
         }
+
+        __timer.start();
     }
-
-    // enable interrupts as we are done with the main logic and no need for locks anymore
-    interrupts();
-
-    delay(60.f / static_cast<float>(__bpm) * 1000.f / static_cast<float>(midier::Time::Subdivisions));
 }
 
 } // arpegguino
