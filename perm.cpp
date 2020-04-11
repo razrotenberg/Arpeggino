@@ -34,7 +34,7 @@ Action Perm::check()
     }
     else if (event == controlino::Key::Event::Hold)
     {
-        const auto sleep = __durations[__config->style.steps - 3]; // ms to sleep between every fast iteration
+        const auto sleep = __durations[__config->style.steps() - 3]; // ms to sleep between every fast iteration
 
         if (__hold.elapsed(sleep)) // already fast iterating and enough time has passed
         {
@@ -58,7 +58,7 @@ Action Perm::check()
 
 void Perm::update()
 {
-    __config->style.perm = (__config->style.perm + 1) % midier::style::count(__config->style.steps);
+    __config->style.perm((__config->style.perm() + 1) % midier::style::count(__config->style.steps()));
 }
 
 INIT_CONFIGURER(Perm);
