@@ -8,7 +8,7 @@ namespace
 
 // the # of layers affect the global variable size
 // this amount of layers requires ~75% of the maximum allowed
-midier::Layers<35> __layers;
+midier::Layers<35> __layers(&__config.data());
 
 } //
 
@@ -25,6 +25,6 @@ unsigned __bpm = 60;
 
 midier::Looper __looper(__layers);
 
-midier::Config * __config = &midier::Config::global();
+midier::Layer::Config __config;
 
 } // arpegguino

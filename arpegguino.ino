@@ -160,18 +160,12 @@ void layer(midier::Layer * layer) // nullptr means go back to global
     if (layer == nullptr)
     {
         __layer.stop();
-        __config = &midier::Config::global(); // go back global configuration
+        __config = &__config.data(); // go back global configuration
     }
     else
     {
         __layer.start();
-
-        if (layer->configured == midier::Layer::Configured::Dynamic)
-        {
-            layer->config = midier::Config::global(); // set the layer's configuration to the global one
-        }
-
-        __config = &layer->config;
+        __config = layer->config.view();
     }
 
     control::view::summary();
@@ -230,12 +224,19 @@ void components()
             __layer.start();
         }
 
+        // actually update the configuration only if in summary mode or if this configurer is in focus
+
         if ((action == configurer::Action::Summary && __focused.viewer == nullptr) ||
             (action == configurer::Action::Focus && __focused.viewer == &component.viewer))
         {
-            if (layered && __layer.layer->configured == midier::Layer::Configured::Dynamic)
+            if (layered && __layer.layer->config.view() == &__config.data())
             {
-                __layer.layer->configured = midier::Layer::Configured::Static;
+                // the selected layer should now detach from the global configuration as
+                // it is being configured specifically.
+                __layer.layer->config = __config.data();
+
+                // we also need to point to the configuration of this layer
+                __config = __layer.layer->config.view();
             }
 
             component.configurer.update();
@@ -398,9 +399,9 @@ void layer()
         {
             if (__layer.layer != nullptr) // a layer is selected
             {
-                if (__layer.layer->configured == midier::Layer::Configured::Static)
+                if (__layer.layer->config.view() != &__config.data())
                 {
-                    __layer.layer->configured = midier::Layer::Configured::Dynamic;
+                    __layer.layer->config = &__config.data();
 
                     // reprint the new (global) configuration
                     control::config::layer(__layer.layer);
@@ -412,10 +413,9 @@ void layer()
 
                 __looper.layers.eval([](midier::Layer & layer)
                     {
-                        if (layer.configured == midier::Layer::Configured::Dynamic)
+                        if (layer.config.view() == &__config.data()) // if the layer is dynamically configured
                         {
-                            layer.config = midier::Config::global(); // set the layer's configuration the the corrent global one
-                            layer.configured = midier::Layer::Configured::Static; // mark it as statically configured
+                            layer.config = __config.data(); // make it static and copy the current global configuration
                         }
                     });
             }
@@ -426,7 +426,7 @@ void layer()
 
             __looper.layers.eval([](midier::Layer & layer)
                 {
-                    layer.configured = midier::Layer::Configured::Dynamic;
+                    layer.config = &__config.data();
                 });
 
             control::config::global();
