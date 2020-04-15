@@ -290,33 +290,15 @@ void keys()
 
 void record()
 {
-    using controlino::Button;
-    using midier::Looper;
-
-    static auto __button = Button(__multiplexer, pin::Record);
+    static auto __button = controlino::Button(__multiplexer, pin::Record);
 
     const auto event = __button.check();
-    const auto state = __looper.state;
 
-    if (event == Button::Event::Click)
+    if (event == controlino::Button::Event::Click)
     {
-        if (state == Looper::State::Wander)
-        {
-            // we want to set the state to `Prerecord` if there are no layers at the moment,
-            // so `__looper` will start recording when the first layer will be played
-            // we want to start recording immediately if there's a layer playing at the moment
-            __looper.state = __looper.layers.idle() ? Looper::State::Prerecord : Looper::State::Record;
-        }
-        else if (state == Looper::State::Record || state == Looper::State::Overlay)
-        {
-            __looper.state = Looper::State::Playback;
-        }
-        else if (state == Looper::State::Playback)
-        {
-            __looper.state = Looper::State::Overlay;
-        }
+        __looper.record();
     }
-    else if (event == Button::Event::Press)
+    else if (event == controlino::Button::Event::Press)
     {
         midier::Layer::Tag tag = -1; // last recorded layer
 
@@ -327,9 +309,9 @@ void record()
 
         __looper.revoke(tag);
     }
-    else if (event == Button::Event::ClickPress)
+    else if (event == controlino::Button::Event::ClickPress)
     {
-        __looper.state = Looper::State::Wander;
+        __looper.wander();
     }
     else
     {
