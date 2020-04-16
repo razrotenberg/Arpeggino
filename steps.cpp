@@ -1,6 +1,6 @@
 #include "internal.h"
 
-namespace arpegguino
+namespace arpeggino
 {
 
 namespace configurer
@@ -43,4 +43,4 @@ INIT_CONFIGURER(Steps);
 
 } // configurer
 
-} // arpegguino
+} // arpeggino

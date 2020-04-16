@@ -1,6 +1,6 @@
 #pragma once
 
-namespace arpegguino
+namespace arpeggino
 {
 namespace configurer
 {
@@ -41,4 +41,4 @@ CONFIGURER(Rhythm);
 #define INIT_CONFIGURER(name) name __ ## name
 
 } // configurer
-} // arpegguino
+} // arpeggino

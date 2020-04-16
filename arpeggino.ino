@@ -1,7 +1,7 @@
 #include "internal.h"
 #include "timer.h"
 
-namespace arpegguino
+namespace arpeggino
 {
 
 namespace
@@ -462,4 +462,4 @@ extern "C" void loop()
     }
 }
 
-} // arpegguino
+} // arpeggino

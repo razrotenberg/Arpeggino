@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-namespace arpegguino
+namespace arpeggino
 {
 
 namespace configurer
@@ -51,4 +51,4 @@ INIT_VIEWER(BPM);
 
 } // viewer
 
-} // arpegguino
+} // arpeggino

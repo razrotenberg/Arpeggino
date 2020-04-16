@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-namespace arpegguino
+namespace arpeggino
 {
 
 namespace configurer
@@ -50,4 +50,4 @@ INIT_VIEWER(Octave);
 
 } // viewer
 
-} // arpegguino
+} // arpeggino

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace arpegguino
+namespace arpeggino
 {
 
 struct Timer
@@ -18,4 +18,4 @@ private:
     unsigned long _millis = -1;
 };
 
-} // arpegguino
+} // arpeggino

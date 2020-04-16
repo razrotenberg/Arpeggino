@@ -1,6 +1,6 @@
 #include "internal.h"
 
-namespace arpegguino
+namespace arpeggino
 {
 
 namespace configurer
@@ -64,4 +64,4 @@ INIT_VIEWER(Rhythm);
 
 } // viewer
 
-} // arpegguino
+} // arpeggino

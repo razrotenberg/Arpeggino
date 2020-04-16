@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-namespace arpegguino
+namespace arpeggino
 {
 
 void Timer::start()
@@ -33,4 +33,4 @@ bool Timer::ticking() const
     return _millis != -1;
 }
 
-} // arpegguino
+} // arpeggino

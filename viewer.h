@@ -1,6 +1,6 @@
 #pragma once
 
-namespace arpegguino
+namespace arpeggino
 {
 namespace viewer
 {
@@ -67,4 +67,4 @@ VIEWER(Rhythm);
 #define INIT_VIEWER(name) name __ ## name
 
 } // viewer
-} // arpegguino
+} // arpeggino

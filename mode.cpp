@@ -1,6 +1,6 @@
 #include "internal.h"
 
-namespace arpegguino
+namespace arpeggino
 {
 
 namespace configurer
@@ -57,4 +57,4 @@ INIT_VIEWER(Mode);
 
 } // viewer
 
-} // arpegguino
+} // arpeggino

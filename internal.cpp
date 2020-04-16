@@ -1,6 +1,6 @@
 #include "internal.h"
 
-namespace arpegguino
+namespace arpeggino
 {
 
 namespace
@@ -27,4 +27,4 @@ midier::Looper __looper(__layers);
 
 midier::Layer::Config __config;
 
-} // arpegguino
+} // arpeggino

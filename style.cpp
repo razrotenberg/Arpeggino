@@ -1,6 +1,6 @@
 #include "internal.h"
 
-namespace arpegguino
+namespace arpeggino
 {
 
 namespace viewer
@@ -54,4 +54,4 @@ INIT_VIEWER(Style);
 
 } // viewer
 
-} // arpegguino
+} // arpeggino

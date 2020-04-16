@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-namespace arpegguino
+namespace arpeggino
 {
 
 namespace configurer
@@ -77,4 +77,4 @@ INIT_VIEWER(Note);
 
 } // viewer
 
-} // arpegguino
+} // arpeggino

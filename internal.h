@@ -4,7 +4,7 @@
 #include <LiquidCrystal.h>
 #include <Midier.h>
 
-namespace arpegguino
+namespace arpeggino
 {
 
 extern LiquidCrystal            __lcd;
@@ -14,7 +14,7 @@ extern unsigned                 __bpm;
 extern midier::Looper           __looper;
 extern midier::Layer::Config    __config;
 
-} // arpegguino
+} // arpeggino
 
 #include "configurer.h"
 #include "pin.h"

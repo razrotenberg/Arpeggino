@@ -1,7 +1,7 @@
 #include "internal.h"
 #include "timer.h"
 
-namespace arpegguino
+namespace arpeggino
 {
 
 namespace configurer
@@ -65,4 +65,4 @@ INIT_CONFIGURER(Perm);
 
 } // configurer
 
-} // arpegguino
+} // arpeggino
