@@ -414,6 +414,21 @@ void layer()
     }
 }
 
+void click()
+{
+    const auto bar = __looper.click(midier::Looper::Run::Async);
+
+    if (bar != midier::Looper::Bar::Same)
+    {
+        control::ui::flash();
+
+        if (__focused.viewer == nullptr && __layer.layer == nullptr)
+        {
+            control::view::bar(bar);
+        }
+    }
+}
+
 } // handle
 
 } //
@@ -437,29 +452,7 @@ extern "C" void loop()
     handle::keys();
     handle::record();
     handle::layer();
-
-    static Timer __timer;
-
-    const auto bps = (float)__bpm / 60.f;
-    const auto mspb = 1000.f / bps;
-    const auto msps = mspb / (float)midier::Time::Subdivisions;
-
-    if (!__timer.ticking() || __timer.elapsed(msps))
-    {
-        const auto bar = __looper.click();
-
-        if (bar != midier::Looper::Bar::Same)
-        {
-            control::ui::flash();
-
-            if (__focused.viewer == nullptr && __layer.layer == nullptr)
-            {
-                control::view::bar(bar);
-            }
-        }
-
-        __timer.start();
-    }
+    handle::click();
 }
 
 } // arpeggino
