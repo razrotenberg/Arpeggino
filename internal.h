@@ -10,7 +10,7 @@ namespace arpeggino
 extern LiquidCrystal            __lcd;
 extern controlino::Selector     __selector;
 extern controlino::Multiplexer  __multiplexer;
-extern midier::Looper           __looper;
+extern midier::Sequencer        __sequencer;
 extern midier::Layer::Config    __config;
 
 } // arpeggino

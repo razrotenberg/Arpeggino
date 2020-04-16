@@ -44,9 +44,9 @@ namespace ui
 void record()
 {
     const auto recording = \
-        __looper.state == midier::Looper::State::Prerecord  ||
-        __looper.state == midier::Looper::State::Record     ||
-        __looper.state == midier::Looper::State::Overlay;
+        __sequencer.state == midier::Sequencer::State::Prerecord    ||
+        __sequencer.state == midier::Sequencer::State::Record       ||
+        __sequencer.state == midier::Sequencer::State::Overlay;
 
     digitalWrite(pin::LED::Record, recording ? HIGH : LOW);
 }
@@ -122,13 +122,13 @@ void focus(viewer::Base & viewer)
     __focused.start();
 }
 
-void bar(midier::Looper::Bar bar)
+void bar(midier::Sequencer::Bar bar)
 {
     __lcd.setCursor(14, 0);
 
     char written = 0;
 
-    if (bar != midier::Looper::Bar::None)
+    if (bar != midier::Sequencer::Bar::None)
     {
         written = __lcd.print((unsigned)bar, DEC);
     }
@@ -278,11 +278,11 @@ void keys()
 
         if (event == Key::Event::Down)
         {
-            key.tag = __looper.start(i + 1);
+            key.tag = __sequencer.start(i + 1);
         }
         else if (event == Key::Event::Up && key.tag != -1) // the tag could be (-1) if there was no place for the layer when the key was pressed
         {
-            __looper.stop(key.tag);
+            __sequencer.stop(key.tag);
             key.tag = -1;
         }
     }
@@ -296,7 +296,7 @@ void record()
 
     if (event == controlino::Button::Event::Click)
     {
-        __looper.record();
+        __sequencer.record();
     }
     else if (event == controlino::Button::Event::Press)
     {
@@ -307,11 +307,11 @@ void record()
             tag = __layer.layer->tag;
         }
 
-        __looper.revoke(tag);
+        __sequencer.revoke(tag);
     }
     else if (event == controlino::Button::Event::ClickPress)
     {
-        __looper.wander();
+        __sequencer.wander();
     }
     else
     {
@@ -343,7 +343,7 @@ void layer()
             }
             else
             {
-                static const auto __count = __looper.layers.count();
+                static const auto __count = __sequencer.layers.count();
 
                 static char __index = 0;
 
@@ -356,7 +356,7 @@ void layer()
 
                 while (__index < __count)
                 {
-                    midier::Layer & prospect = __looper.layers[__index++];
+                    midier::Layer & prospect = __sequencer.layers[__index++];
 
                     if (prospect.tag != -1)
                     {
@@ -391,7 +391,7 @@ void layer()
             {
                 // making all previous dynamic layers static
 
-                __looper.layers.eval([](midier::Layer & layer)
+                __sequencer.layers.eval([](midier::Layer & layer)
                     {
                         if (layer.config.view() == &__config.data()) // if the layer is dynamically configured
                         {
@@ -404,7 +404,7 @@ void layer()
         {
             // set all layers to dynamically configured
 
-            __looper.layers.eval([](midier::Layer & layer)
+            __sequencer.layers.eval([](midier::Layer & layer)
                 {
                     layer.config = &__config.data();
                 });
@@ -416,9 +416,9 @@ void layer()
 
 void click()
 {
-    const auto bar = __looper.click(midier::Looper::Run::Async);
+    const auto bar = __sequencer.click(midier::Sequencer::Run::Async);
 
-    if (bar != midier::Looper::Bar::Same)
+    if (bar != midier::Sequencer::Bar::Same)
     {
         control::ui::flash();
 

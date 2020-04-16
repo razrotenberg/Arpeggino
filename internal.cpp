@@ -21,7 +21,7 @@ controlino::Selector __selector(
 controlino::Multiplexer __multiplexer(
     pin::multiplexer::SIG, __selector);
 
-midier::Looper __looper(__layers);
+midier::Sequencer __sequencer(__layers);
 
 midier::Layer::Config __config;
 
