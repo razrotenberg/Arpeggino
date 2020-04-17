@@ -33,6 +33,7 @@ Timer __flashing;
 struct : Timer
 {
     midier::Layer * layer = nullptr;
+    unsigned char id;
 } __layer;
 
 namespace control
@@ -85,7 +86,7 @@ void summary(viewer::Base * viewer = nullptr) // 'nullptr' means all components
         if (__layer.layer != nullptr)
         {
             written += __lcd.print('L');
-            written += __lcd.print((unsigned)__layer.layer->tag);
+            written += __lcd.print(__layer.id);
         }
 
         while (written++ < 3)
@@ -134,7 +135,7 @@ void bar(midier::Sequencer::Bar bar)
 namespace config
 {
 
-void layer(midier::Layer * layer) // nullptr means go back to global
+void layer(midier::Layer * layer, unsigned char id) // `nullptr` means go back to global
 {
     if (__layer.layer == nullptr && layer == nullptr)
     {
@@ -144,6 +145,7 @@ void layer(midier::Layer * layer) // nullptr means go back to global
     // we allow setting the same layer for updating its config and the timer
 
     __layer.layer = layer;
+    __layer.id = id;
 
     if (layer == nullptr)
     {
@@ -161,7 +163,7 @@ void layer(midier::Layer * layer) // nullptr means go back to global
 
 void global()
 {
-    layer(nullptr);
+    layer(nullptr, 0);
 }
 
 } // config
@@ -339,14 +341,15 @@ void layer()
         {
             if (__focused.viewer != nullptr)
             {
-                // go back tp summary view while keeping the same layer and resetting the timer
-                control::config::layer(__layer.layer);
+                __layer.reset(); // reset the layer timer only if there's one selected currently
+
+                control::view::summary(); // go back to summary view
             }
             else
             {
                 static const auto __count = __sequencer.layers.count();
 
-                static char __index = 0;
+                static unsigned char __index = 0;
 
                 if (__layer.layer == nullptr || __index >= __count)
                 {
@@ -359,7 +362,7 @@ void layer()
                 {
                     midier::Layer & prospect = __sequencer.layers[__index++];
 
-                    if (prospect.tag != -1)
+                    if (prospect.running())
                     {
                         layer = &prospect;
                         break;
@@ -372,7 +375,7 @@ void layer()
                 }
                 else
                 {
-                    control::config::layer(layer);
+                    control::config::layer(layer, __index);
                 }
             }
         }
@@ -382,10 +385,11 @@ void layer()
             {
                 if (__layer.layer->config.inner())
                 {
-                    __layer.layer->config = &__sequencer.config;
+                    __layer.layer->config = __config = &__sequencer.config;
+                    __layer.reset();
 
                     // reprint the new (global) configuration
-                    control::config::layer(__layer.layer);
+                    control::view::summary();
                 }
             }
             else // no layer is selected
