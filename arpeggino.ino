@@ -279,10 +279,10 @@ void keys()
             continue;
         }
 
-        control::config::global(); // go back to global configutarion when playing new layers
-
         if (event == Key::Event::Down)
         {
+            control::config::global(); // go back to global configutarion when playing new layers
+
             key.h = __sequencer.start(i + 1);
         }
         else if (event == Key::Event::Up)
