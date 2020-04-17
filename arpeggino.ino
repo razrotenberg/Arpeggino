@@ -41,16 +41,6 @@ namespace control
 namespace ui
 {
 
-void record()
-{
-    const auto recording = \
-        __sequencer.state == midier::Sequencer::State::Prerecord    ||
-        __sequencer.state == midier::Sequencer::State::Record       ||
-        __sequencer.state == midier::Sequencer::State::Overlay;
-
-    digitalWrite(pin::LED::Record, recording ? HIGH : LOW);
-}
-
 void flash()
 {
     if (__flashing.ticking())
@@ -192,6 +182,22 @@ void flashing()
     __flashing.stop();
 }
 
+void recording()
+{
+    static bool __recording = false;
+
+    const auto recording = \
+        __sequencer.state == midier::Sequencer::State::Prerecord    ||
+        __sequencer.state == midier::Sequencer::State::Record       ||
+        __sequencer.state == midier::Sequencer::State::Overlay;
+
+    if (__recording != recording)
+    {
+        digitalWrite(pin::LED::Record, recording ? HIGH : LOW);
+        __recording = recording;
+    }
+}
+
 void focus()
 {
     if (!__focused.elapsed(3200))
@@ -258,7 +264,7 @@ void keys()
         Key(char pin) : controlino::Key(__multiplexer, pin)
         {}
 
-        midier::Layer::Tag tag = -1;
+        midier::Sequencer::Handle h;
     };
 
     static Key __keys[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
@@ -278,12 +284,11 @@ void keys()
 
         if (event == Key::Event::Down)
         {
-            key.tag = __sequencer.start(i + 1);
+            key.h = __sequencer.start(i + 1);
         }
-        else if (event == Key::Event::Up && key.tag != -1) // the tag could be (-1) if there was no place for the layer when the key was pressed
+        else if (event == Key::Event::Up)
         {
-            __sequencer.stop(key.tag);
-            key.tag = -1;
+            __sequencer.stop(key.h);
         }
     }
 }
@@ -300,14 +305,14 @@ void record()
     }
     else if (event == controlino::Button::Event::Press)
     {
-        midier::Layer::Tag tag = -1; // last recorded layer
-
-        if (__layer.layer != nullptr)
+        if (__layer.layer == nullptr)
         {
-            tag = __layer.layer->tag;
+            __sequencer.revoke(); // revoke the last recorded layer as no layer is selected
         }
-
-        __sequencer.revoke(tag);
+        else
+        {
+            __layer.layer->revoke(); // revoke the selected layer
+        }
     }
     else if (event == controlino::Button::Event::ClickPress)
     {
@@ -319,7 +324,6 @@ void record()
     }
 
     control::config::global();
-    control::ui::record();
 }
 
 void layer()
@@ -447,6 +451,7 @@ extern "C" void setup()
 extern "C" void loop()
 {
     handle::flashing();
+    handle::recording();
     handle::focus();
     handle::components();
     handle::keys();
