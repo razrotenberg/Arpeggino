@@ -186,10 +186,7 @@ void recording()
 {
     static bool __recording = false;
 
-    const auto recording = \
-        __sequencer.state == midier::Sequencer::State::Prerecord    ||
-        __sequencer.state == midier::Sequencer::State::Record       ||
-        __sequencer.state == midier::Sequencer::State::Overlay;
+    const auto recording = __sequencer.recording();
 
     if (__recording != recording)
     {
