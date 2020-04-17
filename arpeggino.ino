@@ -148,7 +148,7 @@ void layer(midier::Layer * layer) // nullptr means go back to global
     if (layer == nullptr)
     {
         __layer.stop();
-        __config = &__config.data(); // go back global configuration
+        __config = &__sequencer.config; // go back global configuration
     }
     else
     {
@@ -230,11 +230,11 @@ void components()
         if ((action == configurer::Action::Summary && __focused.viewer == nullptr) ||
             (action == configurer::Action::Focus && __focused.viewer == &component.viewer))
         {
-            if (layered && __layer.layer->config.view() == &__config.data())
+            if (layered && __layer.layer->config.outer())
             {
                 // the selected layer should now detach from the global configuration as
                 // it is being configured specifically.
-                __layer.layer->config = __config.data();
+                __layer.layer->config = __sequencer.config;
 
                 // we also need to point to the configuration of this layer
                 __config = __layer.layer->config.view();
@@ -380,9 +380,9 @@ void layer()
         {
             if (__layer.layer != nullptr) // a layer is selected
             {
-                if (__layer.layer->config.view() != &__config.data())
+                if (__layer.layer->config.inner())
                 {
-                    __layer.layer->config = &__config.data();
+                    __layer.layer->config = &__sequencer.config;
 
                     // reprint the new (global) configuration
                     control::config::layer(__layer.layer);
@@ -394,9 +394,9 @@ void layer()
 
                 __sequencer.layers.eval([](midier::Layer & layer)
                     {
-                        if (layer.config.view() == &__config.data()) // if the layer is dynamically configured
+                        if (layer.config.outer())
                         {
-                            layer.config = __config.data(); // make it static and copy the current global configuration
+                            layer.config = __sequencer.config; // make it static and copy the current global configuration
                         }
                     });
             }
@@ -407,7 +407,7 @@ void layer()
 
             __sequencer.layers.eval([](midier::Layer & layer)
                 {
-                    layer.config = &__config.data();
+                    layer.config = &__sequencer.config;
                 });
 
             control::config::global();

@@ -11,7 +11,7 @@ extern LiquidCrystal            __lcd;
 extern controlino::Selector     __selector;
 extern controlino::Multiplexer  __multiplexer;
 extern midier::Sequencer        __sequencer;
-extern midier::Config::Viewed   __config;
+extern midier::Config::Packed * __config;
 
 } // arpeggino
 

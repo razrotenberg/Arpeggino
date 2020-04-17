@@ -8,7 +8,7 @@ namespace
 
 // the # of layers affect the global variable size
 // this amount of layers requires ~75% of the maximum allowed
-midier::Layers<35> __layers(&__config.data());
+midier::Layers<35> __layers;
 
 } //
 
@@ -23,6 +23,6 @@ controlino::Multiplexer __multiplexer(
 
 midier::Sequencer __sequencer(__layers);
 
-midier::Config::Viewed __config;
+midier::Config::Packed * __config = &__sequencer.config;
 
 } // arpeggino
