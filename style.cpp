@@ -16,9 +16,9 @@ void Style::print(What what, How how)
         }
         else if (what == What::Data)
         {
-            _print(7, 0, __config->style.steps());
-            _print(8, 0, __config->style.looped() ? '+' : '-');
-            _print(9, 0, 3, __config->style.perm() + 1);
+            _print(7, 0, __config->steps());
+            _print(8, 0, __config->looped() ? '+' : '-');
+            _print(9, 0, 3, __config->perm() + 1);
         }
     }
     else if (how == How::Focus)
@@ -29,15 +29,15 @@ void Style::print(What what, How how)
         }
         else if (what == What::Data)
         {
-            _print(7, 0, __config->style.steps());
-            _print(8, 0, __config->style.looped() ? '+' : '-');
-            _print(9, 0, 3, __config->style.perm() + 1);
+            _print(7, 0, __config->steps());
+            _print(8, 0, __config->looped() ? '+' : '-');
+            _print(9, 0, 3, __config->perm() + 1);
 
             midier::style::Description desc;
-            midier::style::description(__config->style.steps(), __config->style.perm(), /* out */ desc);
+            midier::style::description(__config->steps(), __config->perm(), /* out */ desc);
             _print(0, 1, 16, desc); // all columns in the LCD
 
-            if (__config->style.looped())
+            if (__config->looped())
             {
                 __lcd.setCursor(strlen(desc) + 1, 1);
 

@@ -20,22 +20,22 @@ Action Steps::check()
 
 void Steps::update()
 {
-    if (__config->style.looped() == false)
+    if (__config->looped() == false)
     {
-        __config->style.looped(true);
+        __config->looped(true);
     }
     else
     {
-        unsigned steps = __config->style.steps() + 1;
+        unsigned steps = __config->steps() + 1;
 
         if (steps > 6)
         {
             steps = 3;
         }
 
-        __config->style.steps(steps);
-        __config->style.perm(0);
-        __config->style.looped(false);
+        __config->steps(steps);
+        __config->perm(0);
+        __config->looped(false);
     }
 }
 

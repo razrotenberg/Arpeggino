@@ -23,6 +23,6 @@ controlino::Multiplexer __multiplexer(
 
 midier::Sequencer __sequencer(__layers);
 
-midier::Config::Packed * __config = &__sequencer.config;
+midier::Config * __config = &__sequencer.config;
 
 } // arpeggino
