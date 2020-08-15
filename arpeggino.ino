@@ -7,6 +7,11 @@ namespace arpeggino
 namespace
 {
 
+// // the # of layers affect the global variable size
+// // this amount of layers requires ~75% of the maximum allowed
+// midier::Layers<35> __layers(config::global);
+// midier::Sequencer __sequencer(__layers);
+
 struct Component
 {
     configurer::Base & configurer;
@@ -149,11 +154,23 @@ void layer(midier::Layer * layer, unsigned char id) // `nullptr` means go back t
 
     if (layer == nullptr)
     {
+        __sequencer.layers.eval([](midier::Layer & layer)
+            {
+                layer.velocity = midier::midi::Velocity::High;
+            });
+
         __layer.stop();
         __config = &__sequencer.config; // go back global configuration
     }
     else
     {
+        __sequencer.layers.eval([](midier::Layer & layer)
+            {
+                layer.velocity = midier::midi::Velocity::Low;
+            });
+
+        __layer.layer->velocity = midier::midi::Velocity::High;
+
         __layer.start();
         __config = layer->config.view();
     }
@@ -180,7 +197,7 @@ void flashing()
         return;
     }
 
-    digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(pin::LED::Flash, LOW);
     __flashing.stop();
 }
 
