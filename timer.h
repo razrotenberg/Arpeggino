@@ -15,7 +15,7 @@ struct Timer
     bool ticking() const;
 
 private:
-    unsigned long _millis = -1;
+    unsigned long _millis = -1; // make `short` and document
 };
 
 } // arpeggino

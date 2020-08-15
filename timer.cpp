@@ -25,7 +25,7 @@ void Timer::stop()
 
 bool Timer::elapsed(unsigned ms) const
 {
-    return ticking() && millis() - _millis >= ms;
+    return ticking() && (unsigned long)(millis() - _millis) >= ms;
 }
 
 bool Timer::ticking() const
