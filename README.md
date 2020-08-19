@@ -20,6 +20,7 @@ and modify your sequences even after recording and be creative.
 * [Tutorial](#tutorial)
     * [Step Zero - Prerequisites](#tutorial-step-zero---prerequisites)
     * [Step One - Playing Arpeggios](#tutorial-step-one---playing-arpeggios)
+    * [Step Two - Configuring the Arpeggios](#tutorial-step-two---configuring-the-arpeggios)
 
 ## What Is Arpeggino?
 
@@ -104,7 +105,6 @@ To simplify the development, it's better to connect all buttons to sequential pi
 We use `INPUT_PULLUP` for buttons ([here's](https://www.arduino.cc/en/Tutorial/InputPullupSerial) an explanation) one leg of the button should be plugged to GND and the other leg to the Arduino.
 
 Here's a [schema](tutorial/1__playing_arpeggios/1__playing_arpeggios.fzz) you can use:
-
 <div align="center">
     <img src="tutorial/1__playing_arpeggios/1__playing_arpeggios.png" width="60%">
 </div>
@@ -187,3 +187,154 @@ void loop()
 
 And that's it! Upload it onto your Arduino, start the MIDI-to-Serial bridge software, open up your DAW (or any software that plays MIDI notes) and press the keys!
 You should hear arpeggios from the C major scale as you press the keys.
+
+## Tutorial: Step Two - Configuring the Arpeggios
+
+Now that we have successfully played some arpeggios, it's time for us to start configuring them.
+As listed [here](#what-is-arpeggino), every aspect of the arpeggio can be configured and changed.
+Therefore, we are going to have an I/O control for every configuration parameter.
+
+We will use a potentiometer for controlling the BPM and six buttons for controlling all other configuration parameters.
+
+Here's a [schema](tutorial/2__configuration/2__configuration.fzz) you can use:
+
+<div align="center">
+    <img src="tutorial/2__configuration/2__configuration.png" width="60%">
+</div>
+
+Now let's do some coding again.
+We will extend our Arduino sketch from the previous step, but in this step of the tutorial I'll not go through all the code that needs to be written but just some of it that covers the main concepts.
+Please refer to the [Arduino sketch](tutorial/2__configuration/2__configuration.ino) for the full implementation or just use it as-is.
+
+First of all, we will have to create an object for every I/O control we are using.
+We will have a `controlino::Potentiometer` for the BPM I/O control and limit its value to be at least 20 and at most 230.
+We will have a `controlino::Key` for all other I/O controls.
+
+Here is the I/O control object declarations, using the pin numbers as shown in the schema:
+```
+namespace io
+{
+
+controlino::Potentiometer BPM(A0, /* min = */ 20, /* max = */ 230); // we limit the value of BPM to [20,230]
+controlino::Key Note(10);
+controlino::Key Mode(11);
+controlino::Key Octave(12);
+controlino::Key Perm(A5);
+controlino::Key Steps(A4);
+controlino::Key Rhythm(A3);
+
+} // io
+```
+
+If you have connected fewer I/O controls, make sure to comment out all the code that uses this I/O control.
+A good way is to comment out the I/O control object declaration and comment out all code that fails to compile.
+
+After creating the I/O objects, we are going to use them.
+Every time `loop()` gets called, we want to check for any I/O activity, and change the configuration parameter of the respective I/O control.
+
+We will declare a `Configurer` for every I/O control.
+A `Configurer` will be a method that is responsible for updating a single configuration parameter according to changes of an I/O control.
+We will use the `check()` method of our `controlino` I/O controls to check for I/O events.
+
+Let's take a look at the `BPM` configurer:
+
+```
+namespace configurer
+{
+
+void BPM()
+{
+    // if the value of the potentiometer has changed (since the last time `loop()`
+    // was called), we read the new value of the potentiometer (limited within the
+    // range [20,230]) and set it as the current BPM of the sequencer
+
+    if (io::BPM.check() == controlino::Potentiometer::Event::Changed)
+    {
+        sequencer.bpm = io::BPM.read();
+    }
+}
+
+} // configurer
+```
+
+Let's take a look at the `Octave` configurer:
+```
+namespace configurer
+{
+
+void Octave()
+{
+    // if the key was pressed, we increase the octave by one, while
+    // limiting it to the range [1,7] and set it as the new configuration value
+
+    if (io::Octave.check() == controlino::Key::Event::Down)
+    {
+        const auto current = sequencer.config.octave();
+        const auto next = (current % 7) + 1;
+
+        sequencer.config.octave(next);
+    }
+}
+
+} // configurer
+```
+
+We will have such `Configurer` methods for every I/O control.
+Take a look at them in the [Arduino sketch](tutorial/2__configuration/2__configuration.ino) of this step.
+
+We will now have an array to hold all the `Configurer` methods so we could iterate through all of them easily:
+
+```
+namespace configurer
+{
+
+// a configurer is a method that is responsible for updating a single
+// configuration parameter according to changes of an I/O control
+using Configurer = void(*)();
+
+Configurer All[] =
+    {
+        BPM,
+        Octave,
+
+        // all other configurer methods
+    };
+
+} // configurer
+```
+
+Now we have to call each and every `Configurer` method every time `loop()` gets called.
+We will declare a helper method to do so:
+
+```
+namespace handle
+{
+
+void configurers()
+{
+    // configurers will update the configuration on I/O events
+
+    for (const auto & configurer : configurer::All)
+    {
+        configurer();
+    }
+}
+
+} // handle
+```
+
+And call it in `loop()`, by adding the following line:
+
+```
+void loop()
+{
+    handle::configurers();
+
+    // everything else..
+}
+```
+
+That's it!
+We declared objects for our I/O controls, implemented `Configurer` methods to update the configuration when an I/O event was received on each I/O control, and called all `Configurer` methods every time `loop()` gets called.
+
+Go ahead and play some arpeggios. This time, play around with the new buttons and the potentiometer we have just added, and listen how they affect the arpeggios that you are playing.
