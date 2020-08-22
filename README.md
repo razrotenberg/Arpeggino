@@ -22,6 +22,7 @@ and modify your sequences even after recording and be creative.
     * [Step One - Playing Arpeggios](#tutorial-step-one---playing-arpeggios)
     * [Step Two - Configuring the Arpeggios](#tutorial-step-two---configuring-the-arpeggios)
     * [Step Three - LCD](#tutorial-step-three---lcd)
+    * [Step Four - Recording](#tutorial-step-four---recording)
 
 ## What Is Arpeggino?
 
@@ -573,3 +574,93 @@ In addition, the previous summary view is kept and is the one being used when no
 To support this, we also introduce a helper class `utils::Timer` to allow us to easily check for how much time elapsed and if we should go back to summary view.
 
 We will not have a look at some specific code samples but I encourage you to go ahead and explore the code by yourself.
+
+## Tutorial: Step Four - Recording
+
+One of the major features of Arpeggino is the ability to record and playback MIDI sequences.
+In this step we will add the support for that.
+
+The only hardware addition that is really needed is a single button.
+We will add two more LEDs, a green one and a red one, to improve the user experience.
+The red one will indicate whether Arpeggino is recording, and the green one will blink when entering a new bar in the sequence.
+
+If you skipped the previous step and did not add a multiplexer and an LCD to your setup, or diverged a bit from the schemas we are using, just add a single button to your setup and you are good to go.
+
+Here's the [schema](tutorial/4__recording/4__recording.fzz) of my setup:
+
+<div align="center">
+    <img src="tutorial/4__recording/4__recording.png" width="60%">
+</div>
+
+We will declare our I/O object, and now we will use `controlino::Button` as we will use a few more click gestures, such as long-press and a click-and-press.
+
+```
+namespace io
+{
+
+controlino::Button Record(Multiplexer, 0);
+
+} // io
+```
+
+We will add a control method that will handle I/O events from this button.
+Upon each event we will call a method of our Midier sequencer.
+On click, we will toggle the recording mode using `record()`.
+This is fully documented [here](https://github.com/levosos/Midier#recording-and-looping) on Midier repository.
+On long click (press), we will revoke the last recorded layer.
+On click and press, we will stop the recording entirely.
+
+```
+namespace handle
+{
+
+void record()
+{
+    const auto event = io::Record.check();
+
+    if (event == controlino::Button::Event::Click)
+    {
+        state::sequencer.record();
+    }
+    else if (event == controlino::Button::Event::Press)
+    {
+        state::sequencer.revoke();
+    }
+    else if (event == controlino::Button::Event::ClickPress)
+    {
+        state::sequencer.wander();
+    }
+}
+
+} // handle
+```
+
+We also want to print the bar index within the current loop.
+We will use the return value of `sequencer.click()` for this.
+It returns the bar index if just entered a new bar in a loop, `Bar::Same` if there's no change, and `Bar::None` if the loop was just stopped.
+In case a bar index is returned, we will blink the green LED, and print it using a new method `control::view::bar()`.
+In case the loop was stopped, `Bar::None` will be returned and we will clear this part of the screen.
+
+```
+namespace handle
+{
+
+void click()
+{
+    const auto bar = state::sequencer.click(midier::Sequencer::Run::Async);
+
+    if (bar != midier::Sequencer::Bar::Same)
+    {
+        control::flash();
+
+        if (viewer::focused == nullptr)
+        {
+            control::view::bar(bar);
+        }
+    }
+}
+
+} // handle
+```
+
+The [sketch](tutorial/4__recording/4__recording.ino) of this step adds some more code, but we will not cover it here as it is pretty straightforward.
