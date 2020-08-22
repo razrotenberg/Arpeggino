@@ -21,6 +21,7 @@ and modify your sequences even after recording and be creative.
     * [Step Zero - Prerequisites](#tutorial-step-zero---prerequisites)
     * [Step One - Playing Arpeggios](#tutorial-step-one---playing-arpeggios)
     * [Step Two - Configuring the Arpeggios](#tutorial-step-two---configuring-the-arpeggios)
+    * [Step Three - LCD](#tutorial-step-three---lcd)
 
 ## What Is Arpeggino?
 
@@ -338,3 +339,237 @@ That's it!
 We declared objects for our I/O controls, implemented `Configurer` methods to update the configuration when an I/O event was received on each I/O control, and called all `Configurer` methods every time `loop()` gets called.
 
 Go ahead and play some arpeggios. This time, play around with the new buttons and the potentiometer we have just added, and listen how they affect the arpeggios that you are playing.
+
+## Tutorial: Step Three - LCD
+
+In this step we will add an LCD to our setup for presenting the configuration.
+
+Connecting an LCD to the Arduino requires 6 (digital) I/O pins.
+I'm using and Arduino UNO and in the current setup, with all keys and configuration buttons, there are no six more available I/O pins.
+Therefore, I'm using a 16-channel multiplexer ([here's](https://www.instructables.com/id/Tutorial-74HC4067-16-Channel-Analog-Multiplexer-De/) a great guide) in order to significantly reduce the number of I/O pins that will be used for all the keys and configuration buttons.
+This will make plenty more I/O pins available on the Arduino, allowing to connect an LCD to it.
+
+I'm also using two more mini breadboards to help me organize the main breadboard.
+There are a lot of possibilities here.
+You can use a single breadboard. I did it at first, it's possible but might be suboptimal.
+You can use an extra mini breadboard or two.
+You can use an extra full breadboard.
+So just use whatever gear you have and choose your preferred setup configuration.
+I use more than a single breadboard because connecting a lot of buttons, potentiometers, and an LCD results in a pretty cluttered breadboard.
+Alternative schemas are available [here](tutorial/3__lcd/3_2__basic_lcd).
+
+Don't worry if you don't have all this hardware.
+All the new components we will be adding will probably not be available to everyone.
+
+First of all, I'd recommend you to order those parts so you could eventually build your full Arpeggino.
+In the meantime, you can skip this step of the tutorial entirely and continue to the next steps without an LCD for now.
+If you have an LCD but you don't have a multiplexer, you can omit some of the keys to free up some pins for the LCD.
+
+If you now have all the needed hardware components (an LCD and a multiplexer), we can continue with this step of the tutorial.
+
+Adding the LCD to our project requires many changes, int both hardware and software.
+To ease the tutorial, and decrease the amount of changes needed to be done before seeing some feedback, this step is split to three substeps.
+You can follow them one by one to get some feedback from the Arduino that you are headed in the right direction.
+You also can just go ahead and follow the last one if you are feeling in control.
+
+### Part 1 - Multiplexer
+
+First, we will add the 16-channel multiplexer to our setup.
+The multiplexer itself takes some space on the breadboard, so I'm using an extra mini breadboard for it to have a place for itself.
+Again, this is not mandatory and just go on with the hardware you have ([here's](tutorial/3__lcd/3_2__basic_lcd/3_2__basic_lcd__alt_2.png) a schema I used when I did not have an extra mini breadboard).
+
+In addition, we will reorganize the buttons and the potentiometer a bit.
+This is for the laying the groundwork for the next steps.
+
+Here's the [schema](tutorial/3__lcd/3_1__multiplexer/3_1__multiplexer.fzz) of my setup:
+
+<div align="center">
+    <img src="tutorial/3__lcd/3_1__multiplexer/3_1__multiplexer.png" width="60%">
+</div>
+
+Now to the software side.
+
+We will create a `controlino::Multiplexer` object for the usage of the multiplexer.
+Upon creation, we will pass a `controlino::Selector` object to it as an argument that encapsulates the selection pins of a multiplexer.
+
+```
+namespace io
+{
+
+controlino::Selector Selector(/* s0 = */ 6, /* s1 = */ 5, /* s2 = */ 4, /* s3 = */ 3);
+controlino::Multiplexer Multiplexer(/* sig = */ 2, Selector);
+
+} // io
+```
+
+Now, all configuration buttons are behind the multiplexer.
+We will pass `io::Multiplexer` to the creation of each `controlino::Key`, and use the channel number as the pin number.
+
+```
+namespace io
+{
+
+controlino::Key Note(Multiplexer, 7);
+controlino::Key Mode(Multiplexer, 6);
+controlino::Key Octave(Multiplexer, 5);
+controlino::Key Perm(Multiplexer, 4);
+controlino::Key Steps(Multiplexer, 3);
+controlino::Key Rhythm(Multiplexer, 2);
+
+} // io
+```
+
+In addition, all keys were moved to behind the multiplexer as well.
+Therefore, we will pass `io::Multiplexer` upon their creation as well, and will use the channel numbers as pin numbers.
+
+```
+namespace handle
+{
+
+void keys()
+{
+    struct Key : controlino::Key
+    {
+        Key(char pin) : controlino::Key(io::Multiplexer, pin) // keys are behind the multiplexer
+        {}
+
+        // ...
+    };
+
+    static Key __keys[] = { 15, 14, 13, 12, 11, 10, 9, 8 }; // channel numbers of the multiplexer
+
+    // ...
+}
+
+} // handle
+```
+
+### Part 2 - Basic LCD
+
+Now it's time for the real thing.
+We freed up some I/O pins in the Arduino, and we can now add the LCD to our setup.
+
+I'm using a second extra mini breadboard for this, but again, this is not mandatory ([here's](tutorial/3__lcd/3_2__basic_lcd/3_2__basic_lcd__alt_1.png) a schema I used when I did not have a second extra mini breadboard).
+
+Here's the [schema](tutorial/3__lcd/3_2__basic_lcd/3_2__basic_lcd.fzz) of my setup:
+
+<div align="center">
+    <img src="tutorial/3__lcd/3_2__basic_lcd/3_2__basic_lcd.png" width="60%">
+</div>
+
+And again to coding.
+We are using [LiquidCrystal](https://www.arduino.cc/en/Reference/LiquidCrystal) library to control the LCD.
+We will be extending the `LiquidCrystal` to fit better to our needs (have a look at `io::LCD` to see the implementation) and will create `io::lcd` using the pins shown in the schema.
+
+Our LCD layout consists of a component for every configuration parameter.
+Every component will be printed in a specific position in the LCD, and is responsible for printing its configuration parameter.
+Some of the components have a prefix or suffix as well.
+We call this prefix or suffix the title, and the configuration parameter value is the data.
+We want to print the titles once at the beginning, and to reprint the data every time the configuration parameter changes.
+
+We will have a `viewer::Viewer` method that will be responsible for printing both the title and data of a single configuration parameter.
+This is just like we have a `configurer::Configurer` which is responsible for updating the configuration parameter according to changes of an I/O control.
+
+Let's take a look at `viewer::BPM` for example:
+
+```
+namespace viewer
+{
+
+void BPM(What what)
+{
+    if (what == What::Title)
+    {
+        io::lcd.print(13, 1, "bpm");
+    }
+
+    if (what == What::Data)
+    {
+        io::lcd.print(9, 1, 3, state::sequencer.bpm);
+    }
+}
+
+} // viewer
+```
+
+We will replace our array of `Configurer`s with a new structure to which we call `Component` that holds both a `Configurer` and a `Viewer`.
+
+```
+namespace component
+{
+
+struct Component
+{
+    configurer::Configurer configurer;
+    viewer::Viewer viewer;
+};
+
+Component All[] =
+    {
+        { configurer::BPM, viewer::BPM },
+        { configurer::Note, viewer::Note },
+        { configurer::Mode, viewer::Mode },
+        { configurer::Octave, viewer::Octave },
+        { configurer::Perm, viewer::Style },
+        { configurer::Steps, viewer::Style },
+        { configurer::Rhythm, viewer::Rhythm },
+    };
+
+} // component
+```
+
+To support reprinting the configuration parameter data when changes, we will have all configurers returning a boolean value that will indicate whether the parameter has changed.
+If so, we will call its viewer to reprint the data.
+
+```
+namespace handle
+{
+
+void configurers()
+{
+    for (const auto & component : component::All)
+    {
+        if (component.configurer())
+        {
+            component.viewer(viewer::What::Data); // reprint the value on the LCD if changed
+        }
+    }
+}
+
+} // handle
+```
+
+The last thing we have to do is to initialize our LCD at startup and print all titles and initial configuration values. This is done in `setup()`
+
+```
+void setup()
+{
+    // ...
+
+    io::lcd.begin(16, 2);
+
+    for (const auto & component : component::All)
+    {
+        component.viewer(viewer::What::Title);
+        component.viewer(viewer::What::Data);
+    }
+}
+```
+
+### Part 3 - Advanced LCD
+
+After spending some time with the current setup, you might feel like we are not utilizing the LCD properly.
+Meaning, it's only full of short summarization of the configuration parameters, but in a not really informative way.
+For example, the rhythm and style are presented as numbers that could tell us pretty much nothing, the scale mode is not in its full name, and more.
+
+This step will improve what the LCD has to offer in Arpeggino.
+This step requires no hardware changes from the [previous part](#part-2---basic-lcd), so just follow its schema if you skipped it.
+In case you implemented the previous step, there's nothing more for you to do now with the hardware.
+
+We are introducing a new "focus" mode for `Viewer`s to use the entire LCD for printing a longer description of the parameter while being configured.
+This is not used by all `Viewer`s.
+
+In addition, the previous summary view is kept and is the one being used when not currently configuring parameters.
+To support this, we also introduce a helper class `utils::Timer` to allow us to easily check for how much time elapsed and if we should go back to summary view.
+
+We will not have a look at some specific code samples but I encourage you to go ahead and explore the code by yourself.
