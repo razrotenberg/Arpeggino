@@ -3,14 +3,9 @@
 namespace arpeggino
 {
 
-namespace configurer
+checker::Action checker::Rhythm()
 {
-
-Action Rhythm::check()
-{
-    static auto __key = controlino::Key(__multiplexer, pin::configure::Rhythm);
-
-    if (__key.check() == controlino::Key::Event::Down)
+    if (io::Rhythm.check() == controlino::Key::Event::Down)
     {
         return Action::Focus;
     }
@@ -18,50 +13,42 @@ Action Rhythm::check()
     return Action::None;
 }
 
-void Rhythm::update()
+void changer::Rhythm()
 {
-    __config->rhythm((midier::Rhythm)(((unsigned)__config->rhythm() + 1) % (unsigned)midier::Rhythm::Count));
+    const auto current = state::config->rhythm();
+    const auto next = (midier::Rhythm)(((unsigned)current + 1) % (unsigned)midier::Rhythm::Count);
+
+    state::config->rhythm(next);
 }
 
-INIT_CONFIGURER(Rhythm);
-
-} // configurer
-
-namespace viewer
-{
-
-void Rhythm::print(What what, How how)
+void viewer::Rhythm(What what, How how)
 {
     if (how == How::Summary)
     {
         if (what == What::Title)
         {
-            _print(4, 1, 'R');
+            io::lcd.print(4, 1, 'R');
         }
         else if (what == What::Data)
         {
-            _print(5, 1, 2, (unsigned)__config->rhythm() + 1);
+            io::lcd.print(5, 1, 2, (unsigned)state::config->rhythm() + 1);
         }
     }
     else if (how == How::Focus)
     {
         if (what == What::Title)
         {
-            _print(0, 0, "Rhythm #");
+            io::lcd.print(0, 0, "Rhythm #");
         }
         else if (what == What::Data)
         {
-            _print(8, 0, 2, (unsigned)__config->rhythm() + 1);
+            io::lcd.print(8, 0, 2, (unsigned)state::config->rhythm() + 1);
 
             midier::rhythm::Description desc;
-            midier::rhythm::description(__config->rhythm(), /* out */ desc);
-            _print(0, 1, desc);
+            midier::rhythm::description(state::config->rhythm(), /* out */ desc);
+            io::lcd.print(0, 1, desc);
         }
     }
 }
-
-INIT_VIEWER(Rhythm);
-
-} // viewer
 
 } // arpeggino

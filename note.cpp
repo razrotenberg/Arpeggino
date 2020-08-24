@@ -5,14 +5,9 @@
 namespace arpeggino
 {
 
-namespace configurer
+checker::Action checker::Note()
 {
-
-Action Note::check()
-{
-    static auto __key = controlino::Key(__multiplexer, pin::configure::Note);
-
-    if (__key.check() == controlino::Key::Event::Down)
+    if (io::Note.check() == controlino::Key::Event::Down)
     {
         return Action::Summary;
     }
@@ -20,61 +15,50 @@ Action Note::check()
     return Action::None;
 }
 
-void Note::update()
+void changer::Note()
 {
-    if (__config->accidental() == midier::Accidental::Flat)
+    if (state::config->accidental() == midier::Accidental::Flat)
     {
-        __config->accidental(midier::Accidental::Natural);
+        state::config->accidental(midier::Accidental::Natural);
     }
-    else if (__config->accidental() == midier::Accidental::Natural)
+    else if (state::config->accidental() == midier::Accidental::Natural)
     {
-        __config->accidental(midier::Accidental::Sharp);
+        state::config->accidental(midier::Accidental::Sharp);
     }
-    else if (__config->accidental() == midier::Accidental::Sharp)
+    else if (state::config->accidental() == midier::Accidental::Sharp)
     {
-        __config->accidental(midier::Accidental::Flat);
+        state::config->accidental(midier::Accidental::Flat);
 
-        if      (__config->note() == midier::Note::C) { __config->note(midier::Note::D); }
-        else if (__config->note() == midier::Note::D) { __config->note(midier::Note::E); }
-        else if (__config->note() == midier::Note::E) { __config->note(midier::Note::F); }
-        else if (__config->note() == midier::Note::F) { __config->note(midier::Note::G); }
-        else if (__config->note() == midier::Note::G) { __config->note(midier::Note::A); }
-        else if (__config->note() == midier::Note::A) { __config->note(midier::Note::B); }
-        else if (__config->note() == midier::Note::B) { __config->note(midier::Note::C); }
+        if      (state::config->note() == midier::Note::C) { state::config->note(midier::Note::D); }
+        else if (state::config->note() == midier::Note::D) { state::config->note(midier::Note::E); }
+        else if (state::config->note() == midier::Note::E) { state::config->note(midier::Note::F); }
+        else if (state::config->note() == midier::Note::F) { state::config->note(midier::Note::G); }
+        else if (state::config->note() == midier::Note::G) { state::config->note(midier::Note::A); }
+        else if (state::config->note() == midier::Note::A) { state::config->note(midier::Note::B); }
+        else if (state::config->note() == midier::Note::B) { state::config->note(midier::Note::C); }
     }
 }
 
-INIT_CONFIGURER(Note);
-
-} // configurer
-
-namespace viewer
-{
-
-void Note::print(What what, How how)
+void viewer::Note(What what, How how)
 {
     assert(how == How::Summary);
 
     if (what == What::Data)
     {
-        __lcd.setCursor(0, 0);
+        io::lcd.setCursor(0, 0);
 
-        if      (__config->note() == midier::Note::A) { _print('A'); }
-        else if (__config->note() == midier::Note::B) { _print('B'); }
-        else if (__config->note() == midier::Note::C) { _print('C'); }
-        else if (__config->note() == midier::Note::D) { _print('D'); }
-        else if (__config->note() == midier::Note::E) { _print('E'); }
-        else if (__config->note() == midier::Note::F) { _print('F'); }
-        else if (__config->note() == midier::Note::G) { _print('G'); }
+        if      (state::config->note() == midier::Note::A) { io::lcd.print('A'); }
+        else if (state::config->note() == midier::Note::B) { io::lcd.print('B'); }
+        else if (state::config->note() == midier::Note::C) { io::lcd.print('C'); }
+        else if (state::config->note() == midier::Note::D) { io::lcd.print('D'); }
+        else if (state::config->note() == midier::Note::E) { io::lcd.print('E'); }
+        else if (state::config->note() == midier::Note::F) { io::lcd.print('F'); }
+        else if (state::config->note() == midier::Note::G) { io::lcd.print('G'); }
 
-        if      (__config->accidental() == midier::Accidental::Flat)    { _print('b'); }
-        else if (__config->accidental() == midier::Accidental::Natural) { _print(' '); }
-        else if (__config->accidental() == midier::Accidental::Sharp)   { _print('#'); }
+        if      (state::config->accidental() == midier::Accidental::Flat)    { io::lcd.print('b'); }
+        else if (state::config->accidental() == midier::Accidental::Natural) { io::lcd.print(' '); }
+        else if (state::config->accidental() == midier::Accidental::Sharp)   { io::lcd.print('#'); }
     }
 }
-
-INIT_VIEWER(Note);
-
-} // viewer
 
 } // arpeggino

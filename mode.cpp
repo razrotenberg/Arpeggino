@@ -3,14 +3,9 @@
 namespace arpeggino
 {
 
-namespace configurer
+checker::Action checker::Mode()
 {
-
-Action Mode::check()
-{
-    static auto __key = controlino::Key(__multiplexer, pin::configure::Mode);
-
-    if (__key.check() == controlino::Key::Event::Down)
+    if (io::Mode.check() == controlino::Key::Event::Down)
     {
         return Action::Focus;
     }
@@ -18,43 +13,35 @@ Action Mode::check()
     return Action::None;
 }
 
-void Mode::update()
+void changer::Mode()
 {
-    __config->mode((midier::Mode)(((unsigned)__config->mode() + 1) % (unsigned)midier::Mode::Count));
+    const auto current = state::config->mode();
+    const auto next = (midier::Mode)(((unsigned)current + 1) % (unsigned)midier::Mode::Count);
+
+    state::config->mode(next);
 }
 
-INIT_CONFIGURER(Mode);
-
-} // configurer
-
-namespace viewer
-{
-
-void Mode::print(What what, How how)
+void viewer::Mode(What what, How how)
 {
     if (what == What::Data)
     {
         midier::mode::Name name;
-        midier::mode::name(__config->mode(), /* out */ name);
+        midier::mode::name(state::config->mode(), /* out */ name);
 
         if (how == How::Summary)
         {
-            name[3] = '\0';
-            _print(0, 1, name);
+            name[3] = '\0'; // trim the full name into a 3-letter shortcut
+            io::lcd.print(0, 1, name);
         }
         else if (how == How::Focus)
         {
-            _print(0, 1, sizeof(name), name);
+            io::lcd.print(0, 1, sizeof(name), name);
         }
     }
     else if (what == What::Title && how == How::Focus)
     {
-        _print(0, 0, "Mode: ");
+        io::lcd.print(0, 0, "Mode: ");
     }
 }
-
-INIT_VIEWER(Mode);
-
-} // viewer
 
 } // arpeggino

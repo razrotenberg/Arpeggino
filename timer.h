@@ -2,6 +2,8 @@
 
 namespace arpeggino
 {
+namespace utils
+{
 
 struct Timer
 {
@@ -18,4 +20,5 @@ private:
     unsigned long _millis = -1;
 };
 
+} // utils
 } // arpeggino

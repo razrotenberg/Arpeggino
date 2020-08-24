@@ -1,132 +1,158 @@
 #include "internal.h"
+#include "lcd.h"
+#include "pin.h"
 #include "timer.h"
 
 namespace arpeggino
 {
 
-namespace
+namespace state
+{
+
+struct : utils::Timer
+{
+    midier::Layer * layer = nullptr;
+    unsigned char id;
+} layer;
+
+} // state
+
+namespace io
+{
+
+utils::Timer flashing;
+
+} // io
+
+namespace viewer
+{
+
+struct : utils::Timer
+{
+    // query
+    bool operator==(Viewer other) const { return _viewer == other; }
+    bool operator!=(Viewer other) const { return _viewer != other; }
+
+    // assignment
+    void operator=(Viewer other) { _viewer = other; }
+
+    // access
+    void print(What what, How how) { _viewer(what, how); }
+
+private:
+    Viewer _viewer = nullptr;
+} focused;
+
+} // viewer
+
+namespace component
 {
 
 struct Component
 {
-    configurer::Base & configurer;
-    viewer::Base & viewer;
+    checker::Checker checker;
+    changer::Changer changer;
+    viewer::Viewer viewer;
 };
 
-Component __components[] = {
-    { configurer::__BPM,    viewer::__BPM },
-    { configurer::__Mode,   viewer::__Mode },
-    { configurer::__Note,   viewer::__Note },
-    { configurer::__Octave, viewer::__Octave },
-    { configurer::__Perm,   viewer::__Style },
-    { configurer::__Steps,  viewer::__Style },
-    { configurer::__Rhythm, viewer::__Rhythm },
-};
+Component All[] =
+    {
+        { checker::BPM,     changer::BPM,       viewer::BPM     },
+        { checker::Note,    changer::Note,      viewer::Note    },
+        { checker::Mode,    changer::Mode,      viewer::Mode    },
+        { checker::Octave,  changer::Octave,    viewer::Octave  },
+        { checker::Perm,    changer::Perm,      viewer::Style   },
+        { checker::Steps,   changer::Steps,     viewer::Style   },
+        { checker::Rhythm,  changer::Rhythm,    viewer::Rhythm  },
+    };
 
-struct : Timer
-{
-    viewer::Base * viewer = nullptr;
-} __focused;
-
-Timer __flashing;
-
-struct : Timer
-{
-    midier::Layer * layer = nullptr;
-    unsigned char id;
-} __layer;
+} // component
 
 namespace control
 {
 
-namespace ui
-{
-
 void flash()
 {
-    if (__flashing.ticking())
+    if (io::flashing.ticking())
     {
         return; // already flashing
     }
 
     digitalWrite(pin::LED::Flash, HIGH);
-    __flashing.start();
+    io::flashing.start();
 }
-
-} // ui
 
 namespace view
 {
 
-void summary(viewer::Base * viewer = nullptr) // 'nullptr' means all components
+void summary(viewer::Viewer viewer = nullptr) // 'nullptr' means all components
 {
-    if (__focused.viewer != nullptr) // some viewer is in focus currently
+    if (viewer::focused != nullptr) // some viewer is currently in focus
     {
-        __focused.stop();
-        __focused.viewer = nullptr;
-        __lcd.clear();
-
+        viewer::focused.stop(); // stop the timer
+        viewer::focused = nullptr; // mark as there's no viewer currently in focus
+        io::lcd.clear(); // clear the screen entirely
         viewer = nullptr; // mark to print all titles and values
     }
 
     if (viewer == nullptr)
     {
-        for (auto & component : __components)
+        for (const auto & component : component::All)
         {
-            component.viewer.print(viewer::What::Title, viewer::How::Summary);
-            component.viewer.print(viewer::What::Data, viewer::How::Summary);
+            component.viewer(viewer::What::Title, viewer::How::Summary);
+            component.viewer(viewer::What::Data, viewer::How::Summary);
         }
 
         // layers and bars
 
-        __lcd.setCursor(13, 0);
+        io::lcd.setCursor(13, 0);
 
         char written = 0;
 
-        if (__layer.layer != nullptr)
+        if (state::layer.layer != nullptr)
         {
-            written += __lcd.print('L');
-            written += __lcd.print(__layer.id);
+            written += io::lcd.print('L');
+            written += io::lcd.print(state::layer.id);
         }
 
         while (written++ < 3)
         {
-            __lcd.write(' ');
+            io::lcd.write(' ');
         }
     }
     else
     {
-        viewer->print(viewer::What::Data, viewer::How::Summary);
+        viewer(viewer::What::Data, viewer::How::Summary);
     }
 }
 
-void focus(viewer::Base & viewer)
+void focus(viewer::Viewer viewer)
 {
-    if (__focused.viewer != &viewer) // either in summary mode or another viewer is currently in focus
+    if (viewer::focused != viewer) // either in summary mode or another viewer is currently in focus
     {
-        __lcd.clear();
-        __focused.viewer = &viewer;
-        __focused.viewer->print(viewer::What::Title, viewer::How::Focus);
+        io::lcd.clear(); // clear the screen entirely
+        viewer::focused = viewer; // mark this viewer as the one being in focus
+        viewer::focused.print(viewer::What::Title, viewer::How::Focus); // print the title (only if just became the one in focus)
     }
 
-    __focused.viewer->print(viewer::What::Data, viewer::How::Focus);
-    __focused.start();
+    viewer::focused.print(viewer::What::Data, viewer::How::Focus); // print the data anyways
+    viewer::focused.start(); // start the timer or restart it if ticking already
 }
 
 void bar(midier::Sequencer::Bar bar)
 {
-    __lcd.setCursor(14, 0);
+    io::lcd.setCursor(14, 0);
 
     char written = 0;
 
     if (bar != midier::Sequencer::Bar::None)
     {
-        written = __lcd.print((unsigned)bar, DEC);
+        written = io::lcd.print((unsigned)bar);
     }
 
     while (written++ < 2)
     {
-        __lcd.write(' ');
+        io::lcd.write(' ');
     }
 }
 
@@ -137,25 +163,40 @@ namespace config
 
 void layer(midier::Layer * layer, unsigned char id) // `nullptr` means go back to global
 {
-    if (__layer.layer == nullptr && layer == nullptr)
+    if (state::layer.layer == nullptr && layer == nullptr)
     {
         return; // nothing to do
     }
 
     // we allow setting the same layer for updating its config and the timer
 
-    __layer.layer = layer;
-    __layer.id = id;
+    state::layer.layer = layer;
+    state::layer.id = id;
 
     if (layer == nullptr)
     {
-        __layer.stop();
-        __config = &__sequencer.config; // go back global configuration
+        // increase the volume of all layers
+        state::sequencer.layers.eval([](midier::Layer & layer)
+            {
+                layer.velocity = midier::midi::Velocity::High;
+            });
+
+        state::layer.stop(); // stop the timer
+        state::config = &state::sequencer.config; // point to global configuration
     }
     else
     {
-        __layer.start();
-        __config = layer->config.view();
+        // lower the volume of all layers
+        state::sequencer.layers.eval([](midier::Layer & layer)
+            {
+                layer.velocity = midier::midi::Velocity::Low;
+            });
+
+        // increase the volume of the selected layer
+        state::layer.layer->velocity = midier::midi::Velocity::High;
+
+        state::layer.start(); // start ticking
+        state::config = layer->config.view(); // point to this layer's configuration
     }
 
     control::view::summary();
@@ -175,20 +216,18 @@ namespace handle
 
 void flashing()
 {
-    if (!__flashing.elapsed(70))
+    if (io::flashing.elapsed(70))
     {
-        return;
+        digitalWrite(pin::LED::Flash, LOW);
+        io::flashing.stop();
     }
-
-    digitalWrite(LED_BUILTIN, LOW);
-    __flashing.stop();
 }
 
 void recording()
 {
     static bool __recording = false;
 
-    const auto recording = __sequencer.recording();
+    const auto recording = state::sequencer.recording(); // is recording at the moment?
 
     if (__recording != recording)
     {
@@ -199,57 +238,57 @@ void recording()
 
 void focus()
 {
-    if (!__focused.elapsed(3200))
+    if (viewer::focused.elapsed(3200))
     {
-        return;
+        state::layer.reset(); // restart the layer timer
+
+        control::view::summary(); // go back to summary view
     }
-
-    __layer.reset();
-
-    control::view::summary();
 }
 
 void components()
 {
-    for (auto & component : __components)
-    {
-        const auto action = component.configurer.check();
+    // components will update the configuration on I/O events
 
-        if (action == configurer::Action::None)
+    for (const auto & component : component::All)
+    {
+        const auto action = component.checker();
+
+        if (action == checker::Action::None)
         {
-            continue;
+            continue; // nothing to do
         }
 
-        const auto layered = (__layer.layer != nullptr) && (&component.configurer != &configurer::__BPM); // all configurers but BPM are per layer
+        const auto layered = (state::layer.layer != nullptr) && (component.checker != checker::BPM); // all components are per layer but BPM
 
         if (layered)
         {
-            __layer.start();
+            state::layer.start(); // start ticking
         }
 
-        // actually update the configuration only if in summary mode or if this configurer is in focus
+        // update the configuration only if in summary mode or if this configurer is in focus
 
-        if ((action == configurer::Action::Summary && __focused.viewer == nullptr) ||
-            (action == configurer::Action::Focus && __focused.viewer == &component.viewer))
+        if ((action == checker::Action::Summary && viewer::focused == nullptr) ||
+            (action == checker::Action::Focus && viewer::focused == component.viewer))
         {
-            if (layered && __layer.layer->config.outer())
+            if (layered && state::layer.layer->config.outer())
             {
                 // the selected layer should now detach from the global configuration as
                 // it is being configured specifically.
-                __layer.layer->config = __sequencer.config;
+                state::layer.layer->config = state::sequencer.config; // deep copy the global configuration
 
                 // we also need to point to the configuration of this layer
-                __config = __layer.layer->config.view();
+                state::config = state::layer.layer->config.view();
             }
 
-            component.configurer.update();
+            component.changer();
         }
 
-        if (action == configurer::Action::Summary)
+        if (action == checker::Action::Summary)
         {
-            control::view::summary(&component.viewer);
+            control::view::summary(component.viewer);
         }
-        else if (action == configurer::Action::Focus)
+        else if (action == checker::Action::Focus)
         {
             control::view::focus(component.viewer);
         }
@@ -258,15 +297,16 @@ void components()
 
 void keys()
 {
+    // we extend `controlino::Key` so we could hold a Midier handle with every key
     struct Key : controlino::Key
     {
-        Key(char pin) : controlino::Key(__multiplexer, pin)
+        Key(char pin) : controlino::Key(io::multiplexer, pin) // keys are behind the multiplexer
         {}
 
         midier::Sequencer::Handle h;
     };
 
-    static Key __keys[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    static Key __keys[] = { 15, 14, 13, 12, 11, 10, 9, 8 }; // channel numbers of the multiplexer
 
     for (auto i = 0; i < sizeof(__keys) / sizeof(Key); ++i)
     {
@@ -276,82 +316,78 @@ void keys()
 
         if (event == Key::Event::None)
         {
-            continue;
+            continue; // nothing has changed
         }
 
-        if (event == Key::Event::Down)
+        if (event == Key::Event::Down) // a key was pressed
         {
             control::config::global(); // go back to global configutarion when playing new layers
 
-            key.h = __sequencer.start(i + 1);
+            key.h = state::sequencer.start(i + 1); // start playing an arpeggio of the respective scale degree
         }
-        else if (event == Key::Event::Up)
+        else if (event == Key::Event::Up) // a key was released
         {
-            __sequencer.stop(key.h);
+            state::sequencer.stop(key.h); // stop playing the arpeggio
         }
     }
 }
 
 void record()
 {
-    static auto __button = controlino::Button(__multiplexer, pin::Record);
-
-    const auto event = __button.check();
+    const auto event = io::Record.check();
 
     if (event == controlino::Button::Event::Click)
     {
-        __sequencer.record();
+        state::sequencer.record();
     }
     else if (event == controlino::Button::Event::Press)
     {
-        if (__layer.layer == nullptr)
+        if (state::layer.layer == nullptr)
         {
-            __sequencer.revoke(); // revoke the last recorded layer as no layer is selected
+            state::sequencer.revoke(); // revoke the last recorded layer as no layer is selected
         }
         else
         {
-            __layer.layer->revoke(); // revoke the selected layer
+            state::layer.layer->revoke(); // revoke the selected layer
         }
     }
     else if (event == controlino::Button::Event::ClickPress)
     {
-        __sequencer.wander();
+        state::sequencer.wander();
     }
     else
     {
         return;
     }
 
-    control::config::global();
+    control::config::global(); // go back to global configuration
 }
 
 void layer()
 {
-    if (__layer.elapsed(6000))
+    if (state::layer.elapsed(6000))
     {
-        control::config::global();
+        control::config::global(); // go back to global configuration after 6 seconds
     }
     else
     {
-        static auto __button = controlino::Button(pin::Layer);
+        const auto event = io::Layer.check();
 
-        const auto event = __button.check();
-
-        if (event == controlino::Button::Event::Click)
+        if (event == controlino::Button::Event::Click) // iterate layers
         {
-            if (__focused.viewer != nullptr)
+            if (viewer::focused != nullptr)
             {
-                __layer.reset(); // reset the layer timer only if there's one selected currently
+                state::layer.reset(); // reset the layer timer only if there's one selected currently
 
                 control::view::summary(); // go back to summary view
             }
             else
             {
-                static const auto __count = __sequencer.layers.count();
+                static const auto __count = state::sequencer.layers.count();
 
                 static unsigned char __index = 0;
 
-                if (__layer.layer == nullptr || __index >= __count)
+                if (state::layer.layer == nullptr || __index >= __count)
                 {
                     __index = 0; // search from the start again
                 }
@@ -360,7 +396,7 @@ void layer()
 
                 while (__index < __count)
                 {
-                    midier::Layer & prospect = __sequencer.layers[__index++];
+                    midier::Layer & prospect = state::sequencer.layers[__index++];
 
                     if (prospect.running())
                     {
@@ -381,14 +417,17 @@ void layer()
         }
         else if (event == controlino::Button::Event::Press)
         {
-            if (__layer.layer != nullptr) // a layer is selected
+            if (state::layer.layer != nullptr) // a layer is selected
             {
-                if (__layer.layer->config.inner())
+                if (state::layer.layer->config.inner())
                 {
-                    __layer.layer->config = __config = &__sequencer.config;
-                    __layer.reset();
+                    // we make it point to the global configuration
+                    state::layer.layer->config = state::config = &state::sequencer.config;
 
-                    // reprint the new (global) configuration
+                    // reset the timer
+                    state::layer.reset();
+
+                    // print the new (global) configuration
                     control::view::summary();
                 }
             }
@@ -396,22 +435,22 @@ void layer()
             {
                 // making all previous dynamic layers static
 
-                __sequencer.layers.eval([](midier::Layer & layer)
+                state::sequencer.layers.eval([](midier::Layer & layer)
                     {
                         if (layer.config.outer())
                         {
-                            layer.config = __sequencer.config; // make it static and copy the current global configuration
+                            layer.config = state::sequencer.config; // make it static and copy the current global configuration
                         }
                     });
             }
         }
         else if (event == controlino::Button::Event::ClickPress)
         {
-            // set all layers to dynamically configured
+            // set all layers to be dynamically configured
 
-            __sequencer.layers.eval([](midier::Layer & layer)
+            state::sequencer.layers.eval([](midier::Layer & layer)
                 {
-                    layer.config = &__sequencer.config;
+                    layer.config = &state::sequencer.config;
                 });
 
             control::config::global();
@@ -421,13 +460,13 @@ void layer()
 
 void click()
 {
-    const auto bar = __sequencer.click(midier::Sequencer::Run::Async);
+    const auto bar = state::sequencer.click(midier::Sequencer::Run::Async);
 
     if (bar != midier::Sequencer::Bar::Same)
     {
-        control::ui::flash();
+        control::flash();
 
-        if (__focused.viewer == nullptr && __layer.layer == nullptr)
+        if (viewer::focused == nullptr && state::layer.layer == nullptr)
         {
             control::view::bar(bar);
         }
@@ -436,16 +475,21 @@ void click()
 
 } // handle
 
-} //
-
 extern "C" void setup()
 {
+    // initialize the Arduino "Serial" module and set the baud rate
+    // to the same value you are using in your software.
+    // if connected physically using a MIDI 5-DIN connection, use 31250.
     Serial.begin(9600);
-    __lcd.begin(16, 2);
 
+    // initialize the LEDs
     pinMode(pin::LED::Flash, OUTPUT);
     pinMode(pin::LED::Record, OUTPUT);
 
+    // initialize the LCD
+    io::lcd.begin(16, 2);
+
+    // print the initial configuration
     control::view::summary();
 }
 

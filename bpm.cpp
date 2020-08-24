@@ -5,14 +5,9 @@
 namespace arpeggino
 {
 
-namespace configurer
+checker::Action checker::BPM()
 {
-
-static auto __potentiometer = controlino::Potentiometer<20, 230>(pin::configure::BPM);
-
-Action BPM::check()
-{
-    if (__potentiometer.check() == controlino::Potentiometer<20, 230>::Event::Changed)
+    if (io::BPM.check() == controlino::Potentiometer::Event::Changed)
     {
         return Action::Summary;
     }
@@ -20,35 +15,24 @@ Action BPM::check()
     return Action::None;
 }
 
-void BPM::update()
+void changer::BPM()
 {
-    __sequencer.bpm = __potentiometer.read();
+    state::sequencer.bpm = io::BPM.read();
 }
 
-INIT_CONFIGURER(BPM);
-
-} // configurer
-
-namespace viewer
-{
-
-void BPM::print(What what, How how)
+void viewer::BPM(What what, How how)
 {
     assert(how == How::Summary);
 
     if (what == What::Title)
     {
-        _print(13, 1, "bpm");
+        io::lcd.print(13, 1, "bpm");
     }
 
     if (what == What::Data)
     {
-        _print(9, 1, 3, __sequencer.bpm);
+        io::lcd.print(9, 1, 3, state::sequencer.bpm);
     }
 }
-
-INIT_VIEWER(BPM);
-
-} // viewer
 
 } // arpeggino

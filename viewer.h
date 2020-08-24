@@ -17,54 +17,14 @@ enum class How
     Focus,
 };
 
-struct Base
-{
-    virtual void print(What what, How how) = 0;
+void BPM    (What, How);
+void Mode   (What, How);
+void Note   (What, How);
+void Octave (What, How);
+void Rhythm (What, How);
+void Style  (What, How);
 
-protected:
-    template <typename T>
-    char _print(const T & arg)
-    {
-        return __lcd.print(arg);
-    }
-
-    template <typename T>
-    char _print(char col, char row, const T & arg)
-    {
-        __lcd.setCursor(col, row);
-        return _print(arg);
-    }
-
-    template <typename T>
-    void _print(char col, char row, char max, const T & arg)
-    {
-        const auto written = _print(col, row, arg);
-
-        for (unsigned i = 0; i < max - written; ++i)
-        {
-            __lcd.write(' '); // make sure the non-used characters are clear
-        }
-    }
-};
-
-#define VIEWER(name)                                \
-    struct name : Base                              \
-    {                                               \
-        void print(What what, How how) override;    \
-    };                                              \
-                                                    \
-    extern name __ ## name
-
-VIEWER(BPM);
-VIEWER(Mode);
-VIEWER(Note);
-VIEWER(Octave);
-VIEWER(Style);
-VIEWER(Rhythm);
-
-#undef VIEWER
-
-#define INIT_VIEWER(name) name __ ## name
+using Viewer = void(*)(What, How);
 
 } // viewer
 } // arpeggino

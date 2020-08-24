@@ -3,14 +3,9 @@
 namespace arpeggino
 {
 
-namespace configurer
+checker::Action checker::Steps()
 {
-
-Action Steps::check()
-{
-    static auto __key = controlino::Key(__multiplexer, pin::configure::Steps);
-
-    if (__key.check() == controlino::Key::Event::Down)
+    if (io::Steps.check() == controlino::Key::Event::Down)
     {
         return Action::Focus;
     }
@@ -18,29 +13,25 @@ Action Steps::check()
     return Action::None;
 }
 
-void Steps::update()
+void changer::Steps()
 {
-    if (__config->looped() == false)
+    if (state::config->looped() == false)
     {
-        __config->looped(true);
+        state::config->looped(true);
     }
     else
     {
-        unsigned steps = __config->steps() + 1;
+        unsigned steps = state::config->steps() + 1;
 
         if (steps > 6)
         {
             steps = 3;
         }
 
-        __config->steps(steps);
-        __config->perm(0);
-        __config->looped(false);
+        state::config->steps(steps);
+        state::config->perm(0);
+        state::config->looped(false);
     }
 }
-
-INIT_CONFIGURER(Steps);
-
-} // configurer
 
 } // arpeggino

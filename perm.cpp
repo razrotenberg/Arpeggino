@@ -4,16 +4,12 @@
 namespace arpeggino
 {
 
-namespace configurer
-{
-
-Action Perm::check()
+checker::Action checker::Perm()
 {
     auto action = Action::None;
 
-    static auto __key = controlino::Key(__multiplexer, pin::configure::Perm);
-    static auto __start = Timer();
-    static auto __hold = Timer();
+    static auto __start = utils::Timer();
+    static auto __hold = utils::Timer();
 
     // we define different sleep duration for different number of stpes for it to be
     // both easy to iterate through all options while not iterating too fast
@@ -25,7 +21,7 @@ Action Perm::check()
             /* 6 steps: */ 10,
         };
 
-    const auto event = __key.check();
+    const auto event = io::Perm.check();
 
     if (event == controlino::Key::Event::Down)
     {
@@ -34,7 +30,7 @@ Action Perm::check()
     }
     else if (event == controlino::Key::Event::Hold)
     {
-        const auto sleep = __durations[__config->steps() - 3]; // ms to sleep between every fast iteration
+        const auto sleep = __durations[state::config->steps() - 3]; // ms to sleep between every fast iteration
 
         if (__hold.elapsed(sleep)) // already fast iterating and enough time has passed
         {
@@ -56,13 +52,12 @@ Action Perm::check()
     return action;
 }
 
-void Perm::update()
+void changer::Perm()
 {
-    __config->perm((__config->perm() + 1) % midier::style::count(__config->steps()));
+    const auto current = state::config->perm();
+    const auto next = (current + 1) % midier::style::count(state::config->steps());
+
+    state::config->perm(next);
 }
-
-INIT_CONFIGURER(Perm);
-
-} // configurer
 
 } // arpeggino
