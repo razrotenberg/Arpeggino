@@ -23,6 +23,7 @@ and modify your sequences even after recording and be creative.
     * [Step Two - Configuring the Arpeggios](#tutorial-step-two---configuring-the-arpeggios)
     * [Step Three - LCD](#tutorial-step-three---lcd)
     * [Step Four - Recording](#tutorial-step-four---recording)
+    * [Step Five - Layers](#tutorial-step-five---layers)
 
 ## What Is Arpeggino?
 
@@ -664,3 +665,88 @@ void click()
 ```
 
 The [sketch](tutorial/4__recording/4__recording.ino) of this step adds some more code, but we will not cover it here as it is pretty straightforward.
+
+## Tutorial: Step Five - Layers
+
+In the previous step we added the support to record sequences in Arpeggino.
+
+While recording, every key press creates a new layer in the sequence with the respective scale degree.
+Along with its scale degree, each layer has its configuration.
+
+By default, all layers point to the common configuration (also called the global configuration) - the one that is shown on the LCD.
+This means that even after recording, you can change the common configuration, and all recorded layers will follow along your changes.
+This allows us to play around different styles and rhythms even after recording a sequence.
+
+A layer can also detach from the common configuration and have its own private configuration.
+After detaching from the common configuration, any changes to the common configuration will not affect the layer.
+
+When a layer points to the common configuration it is called "dynamic", and when it's detached from it and has its own private configuration, it is called "static".
+
+These two possibilities together significantly expand the boundaries of our recorded sequences.
+We can combine both static and dynamic layers in our sequence.
+For example, we can have some static layers to play the role of a bass, configured to a certain octave, note, style, or rhythm.
+At the same time, we can have some dynamic layers with the melody itself, and playing around with their configuration post recording.
+
+In this step of the tutorial, we will add the support to iterate recorded layers, and convert dynamic layers to be static layers and vice versa.
+While iterating layers, the layer number will be printed on the LCD, and its configuration - whether it's the common one or a private one - will be the one shown on the LCD.
+Also, while iterating layers, we will decrease the volume of all the other layers, so we could use our ears and easily understand which layer is selected at the moment.
+When a layer is selected, changing the configuration will cause the layer to detach from the common configuration, and the shown configuration will be set to its private configuration.
+Any changes while a layer is selected will affect only the selected layer.
+
+A short detour if we are already talking of layers:
+
+Layers can be either finite or infinite.
+A finite layer is a layer that starts some time within the sequence and stops at another time, before the sequence has fully looped.
+An infinite layer is a layer that is played all along the sequence.
+
+For example, if we have a sequence of 4 bars, and we pressed a certain key for 2 bars, then its layer is finite.
+In contrast, if we pressed the key and did not release it until all 4 bars played entirely, and the sequence started to loop itself, then the layer is infinite.
+
+Infinite layers will always be continous, regardless of the number of bars in the sequence, the number of steps of the arpeggio, and the rhythm.
+Finite layers are not continous, they stop when the key was released, and start again when it was pressed in the next loop of the sequence.
+
+Let's take an extreme example, and say that we have a sequence of a single bar.
+Let's also say that we are playing in the rhythm of triplets, meaning that we have three notes in a bar.
+What happens if we played an arpeggio with more than three steps? The answer is that it depends.
+
+If the key was pressed all along the sequence, then the layer is infinite, and the entire arpeggio will be played, with the correct number of steps.
+If, for example, we use six steps, then it will be played across two bars, even that our sequence is a single bar long.
+This might seem odd when you think about it, but your ears and feeling would suggest you that it is clearly necessary, and it's the native and expected behavior if you continously pressed a key along your sequence.
+
+In contrast, if we released the key sometime before the loop was fully completed, then the layer would stop and start again in the next loop, meaning that not all steps would be heard.
+This is again the expected behavior if you released the key within the loop.
+Play with it for some time and you'll get the feeling.
+
+Now that we have much more information about layers, we could get back to the tutorial.
+
+On the hardware side, a single button is needed. I added it next to the recording button.
+
+Here's the [schema](tutorial/5__layers/5__layers.fzz) of my setup:
+
+<div align="center">
+    <img src="tutorial/5__layers/5__layers.png" width="60%">
+</div>
+
+Now to the software side.
+Until now, we only referred to the common configuration.
+We now want to point to other configurations sometimes - the selected layer's configuration.
+Therefore, we will have a pointer that will point to the currently shown configuration, and we will refer to it in all places we referred to the common configuration.
+It will be initialized by pointing to the common configuration.
+
+```
+namespace state
+{
+
+midier::Config * config = &sequencer.config;
+
+} // state
+```
+
+We will also have to handle I/O events from the newly added button.
+Here's a summary of the supported gestures and their actions:
+- *Click* - Selects the next layer. This selects the first layer if currently no layer is selected, or the next one if one is currently selected. After the last layer, this will go back to the common configuration. We will set `state::configuration` to point to the configuration of the selected layer and print it in summary view.
+- *Press* - If a layer is selected, and is statically configured, we will make it dynamic again, so it will follow the common configuration again. If no layer is selected, we will convert all dynamic layers to be statically configured.
+- *ClickPress* - This will convert all layers to be dynamically configured. The common configuration will be printed in summary view.
+
+The [sketch](tutorial/5__layers/5__layers.ino) of this step has more code additions, but we will not cover anymore.
+They contain the printing of the layer number in summary view, the handling of timers (going back to the common configuration after a few seconds), and some more minor changes.
