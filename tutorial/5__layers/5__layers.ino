@@ -710,7 +710,7 @@ void components()
             continue; // nothing to do
         }
 
-        const auto layered = (state::layer.layer != nullptr) && (&component.configurer != &configurer::BPM); // all configurers but BPM are per layer
+        const auto layered = (state::layer.layer != nullptr) && (component.viewer != viewer::BPM); // all configurers but BPM are per layer
 
         if (layered)
         {
