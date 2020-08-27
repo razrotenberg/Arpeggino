@@ -87,9 +87,16 @@ Note that you need to set the baud rate properly in the Arduino sketch (the para
 # Tutorial
 
 This is a tutorial on how to build Arpeggino by yourself.
-Code (sketches) and schemas of all steps are in the subdirectories under [tutorial](tutorial).
+
+**This tutorial is 100% plug and play**. Code (sketches), schemas, and illustrations of all steps are in the subdirectories under [tutorial](tutorial).
+
+If you want, you could even stop to read the tutorial right here, and just do it on your own by following the schema of each step and uploading its sketch as-is.
+
+We will be covering the main additions of every step and will have a look at code samples for some explanation.
 
 ## Tutorial: Step Zero - Prerequisites
+
+Clone this repository to have all source files on your computer.
 
 Install Midier and Controlino using the Arduino Library Manager ([here's](https://www.arduino.cc/en/guide/libraries) a short guide)
 
@@ -100,6 +107,8 @@ Pick your favorite software for playing MIDI notes. A few that I know of: Garage
 Optionallly, check out some of [Midier examples](https://github.com/levosos/Midier#listen-to-examples) on GitHub and verify your setup works
 
 ## Tutorial: Step One - Playing Arpeggios
+
+Here's a video on [YouTube](https://youtu.be/3n4ExSrUI3Q) demonstrating what we will achieve in this step of the tutorial.
 
 First we need to connect a few buttons to the Arduino. Having eight buttons is optimal as it is the number of notes in diatonic scales (including one for the root at an octave higher).
 
@@ -194,6 +203,9 @@ You should hear arpeggios from the C major scale as you press the keys.
 ## Tutorial: Step Two - Configuring the Arpeggios
 
 Now that we have successfully played some arpeggios, it's time for us to start configuring them.
+
+Here's a video on [YouTube](https://youtu.be/RrJOeYbTeBo) demonstrating what we will achieve in this step of the tutorial.
+
 As listed [here](#what-is-arpeggino), every aspect of the arpeggio can be configured and changed.
 Therefore, we are going to have an I/O control for every configuration parameter.
 
@@ -345,6 +357,8 @@ Go ahead and play some arpeggios. This time, play around with the new buttons an
 ## Tutorial: Step Three - LCD
 
 In this step we will add an LCD to our setup for presenting the configuration.
+
+Here's a video on [YouTube](https://youtu.be/JMmgKkIBqL4) demonstrating what we will achieve in this step of the tutorial.
 
 Connecting an LCD to the Arduino requires 6 (digital) I/O pins.
 I'm using and Arduino UNO and in the current setup, with all keys and configuration buttons, there are no six more available I/O pins.
@@ -581,6 +595,8 @@ We will not have a look at some specific code samples but I encourage you to go 
 One of the major features of Arpeggino is the ability to record and playback MIDI sequences.
 In this step we will add the support for that.
 
+Here's a video on [YouTube](https://youtu.be/THWG4ku-cRw) demonstrating what we will achieve in this step of the tutorial.
+
 The only hardware addition that is really needed is a single button.
 We will add two more LEDs, a green one and a red one, to improve the user experience.
 The red one will indicate whether Arpeggino is recording, and the green one will blink when entering a new bar in the sequence.
@@ -669,6 +685,9 @@ The [sketch](tutorial/4__recording/4__recording.ino) of this step adds some more
 ## Tutorial: Step Five - Layers
 
 In the previous step we added the support to record sequences in Arpeggino.
+In this step we will add the support to iterate recorded layers and control them individually.
+
+Here's a video on [YouTube](https://youtu.be/3yDC3sfVmBc) demonstrating what we will achieve in this step of the tutorial.
 
 While recording, every key press creates a new layer in the sequence with the respective scale degree.
 Along with its scale degree, each layer has its configuration.
@@ -702,8 +721,8 @@ An infinite layer is a layer that is played all along the sequence.
 For example, if we have a sequence of 4 bars, and we pressed a certain key for 2 bars, then its layer is finite.
 In contrast, if we pressed the key and did not release it until all 4 bars played entirely, and the sequence started to loop itself, then the layer is infinite.
 
-Infinite layers will always be continous, regardless of the number of bars in the sequence, the number of steps of the arpeggio, and the rhythm.
-Finite layers are not continous, they stop when the key was released, and start again when it was pressed in the next loop of the sequence.
+Infinite layers will always be continuous, regardless of the number of bars in the sequence, the number of steps of the arpeggio, and the rhythm.
+Finite layers are not continuous, they stop when the key was released, and start again when it was pressed in the next loop of the sequence.
 
 Let's take an extreme example, and say that we have a sequence of a single bar.
 Let's also say that we are playing in the rhythm of triplets, meaning that we have three notes in a bar.
@@ -711,7 +730,7 @@ What happens if we played an arpeggio with more than three steps? The answer is 
 
 If the key was pressed all along the sequence, then the layer is infinite, and the entire arpeggio will be played, with the correct number of steps.
 If, for example, we use six steps, then it will be played across two bars, even that our sequence is a single bar long.
-This might seem odd when you think about it, but your ears and feeling would suggest you that it is clearly necessary, and it's the native and expected behavior if you continously pressed a key along your sequence.
+This might seem odd when you think about it, but your ears and feeling would suggest you that it is clearly necessary, and it's the native and expected behavior if you continuously pressed a key along your sequence.
 
 In contrast, if we released the key sometime before the loop was fully completed, then the layer would stop and start again in the next loop, meaning that not all steps would be heard.
 This is again the expected behavior if you released the key within the loop.
