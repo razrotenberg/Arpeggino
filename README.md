@@ -90,7 +90,7 @@ This is a tutorial on how to build Arpeggino by yourself.
 
 **This tutorial is 100% plug and play**. Code (sketches), schemas, and illustrations of all steps are in the subdirectories under [tutorial](tutorial).
 
-If you want, you could even stop to read the tutorial right here, and just do it on your own by following the schema of each step and uploading its sketch as-is.
+You can even stop reading the tutorial right here if you want, and just do it on your own by following the schema of each step and uploading its sketch as-is.
 
 We will be covering the main additions of every step and will have a look at code samples for some explanation.
 
@@ -148,7 +148,7 @@ void setup()
 }
 ```
 
-Now the real action comes. Every iteration, we want to check if any of the keys was pressed or released, and start or stop playing the arpeggio respectively. After checking for I/O, we have to "click" Midier.
+Now comes the real action. Every iteration, we want to check if any of the keys was pressed or released, and start or stop playing the arpeggio respectively. After checking for I/O, we have to "click" Midier.
 
 The following code might seem complicated at first sight but it is really not.
 We define a structure that extends Controlino's `Key` that can hold the handler of an arpeggio that is being played by Midier.
@@ -370,23 +370,24 @@ There are a lot of possibilities here.
 You can use a single breadboard. I did it at first, it's possible but might be suboptimal.
 You can use an extra mini breadboard or two.
 You can use an extra full breadboard.
-So just use whatever gear you have and choose your preferred setup configuration.
+So just use whatever gear you have and choose your preferred setup layout.
 I use more than a single breadboard because connecting a lot of buttons, potentiometers, and an LCD results in a pretty cluttered breadboard.
 Alternative schemas are available [here](tutorial/3__lcd/3_2__basic_lcd).
 
 Don't worry if you don't have all this hardware.
-All the new components we will be adding will probably not be available to everyone.
+All the new components we will be adding are probably not available to everyone.
 
 First of all, I'd recommend you to order those parts so you could eventually build your full Arpeggino.
 In the meantime, you can skip this step of the tutorial entirely and continue to the next steps without an LCD for now.
-If you have an LCD but you don't have a multiplexer, you can omit some of the keys to free up some pins for the LCD.
+
+If you have an LCD but you don't have a multiplexer, you can get rid of some of the keys to free up some pins for the LCD.
 
 If you now have all the needed hardware components (an LCD and a multiplexer), we can continue with this step of the tutorial.
 
-Adding the LCD to our project requires many changes, int both hardware and software.
-To ease the tutorial, and decrease the amount of changes needed to be done before seeing some feedback, this step is split to three substeps.
+Adding the LCD to our project requires many changes, both in hardware and software.
+To ease the tutorial, and decrease the amount of changes needed to be done before seeing some feedback, this step is split to three sub-steps.
 You can follow them one by one to get some feedback from the Arduino that you are headed in the right direction.
-You also can just go ahead and follow the last one if you are feeling in control.
+You can also just go ahead and follow the last one (part 3) if you are feeling in control.
 
 ### Part 1 - Multiplexer
 
@@ -459,6 +460,8 @@ void keys()
 
 } // handle
 ```
+
+Go ahead and upload the sketch onto your Arduino to see that everything is still working.
 
 ### Part 2 - Basic LCD
 
@@ -730,7 +733,7 @@ What happens if we played an arpeggio with more than three steps? The answer is 
 
 If the key was pressed all along the sequence, then the layer is infinite, and the entire arpeggio will be played, with the correct number of steps.
 If, for example, we use six steps, then it will be played across two bars, even that our sequence is a single bar long.
-This might seem odd when you think about it, but your ears and feeling would suggest you that it is clearly necessary, and it's the native and expected behavior if you continuously pressed a key along your sequence.
+This might seem odd when you think about it, but your ears and feeling would suggest that it is clearly necessary, and it's the native and expected behavior if you continuously pressed a key along your sequence.
 
 In contrast, if we released the key sometime before the loop was fully completed, then the layer would stop and start again in the next loop, meaning that not all steps would be heard.
 This is again the expected behavior if you released the key within the loop.
