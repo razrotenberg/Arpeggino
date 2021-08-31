@@ -87,7 +87,7 @@ Note that you need to set the baud rate properly in the Arduino sketch (the para
 # Tutorial
 
 This is a tutorial on how to build Arpeggino by yourself.
-It was published on [Arduino Project Hub](https://create.arduino.cc/projecthub/razhaleva/arpeggino-midi-arpeggiator-sequencer-recorder-and-looper-5aeb7b) as well.
+It was published on [Arduino Project Hub](https://create.arduino.cc/projecthub/razrotenberg/arpeggino-midi-arpeggiator-sequencer-recorder-and-looper-5aeb7b) as well.
 
 **This tutorial is 100% plug and play**. Code (sketches), schemas, and illustrations of all steps are in the subdirectories under [tutorial](tutorial).
 
