@@ -54,18 +54,18 @@ A short demo video is available on [YouTube](https://youtu.be/HbMf0oO-zfE).
 
 Arpeggino consists of three sub-projects:
 
-- [Controlino](https://github.com/levosos/Controlino) -
+- [Controlino](https://github.com/razrotenberg/Controlino) -
 An Arduino library for using complex gestures of input controls behind a multiplexer.
 It is the library used in Arpeggino to easily control buttons and potentiometers behind a multiplexer.
 It allows the detection of complex click gestures such as click/double-click/long click (press)/etc.
-- [Midier](https://github.com/levosos/Midier) -
+- [Midier](https://github.com/razrotenberg/Midier) -
 An Arduino library for playing, recording, looping and programming MIDI notes, arpeggios and sequences.
 This is the engine behind Arpggino, that lets it do all the musical and rhythmical stuff.
 - *Arpeggino* (this very repository) -
 The Arduino sketch project.
 This project is responsible for handling all I/O controls (keys, buttons, potentiometers, LCD), configuring Midier and using it for recording and playing the sequences.
 
-Both [Controlino](https://github.com/levosos/Controlino) and [Midier](https://github.com/levosos/Midier) are comprehensively documented and feature plenty of [examples](https://github.com/levosos/Midier#listen-to-examples) you can check out and listen to right from your browser.
+Both [Controlino](https://github.com/razrotenberg/Controlino) and [Midier](https://github.com/razrotenberg/Midier) are comprehensively documented and feature plenty of [examples](https://github.com/razrotenberg/Midier#listen-to-examples) you can check out and listen to right from your browser.
 
 Both libraries are officially published and can be installed directly from the Arduino IDE Library Manager ([here's](https://www.arduino.cc/en/guide/libraries) a short guide).
 
@@ -80,9 +80,9 @@ There are two main ways you can connect Arpeggino to your computer:
 1. Over the USB connection using the help of some software (I use [Hairless MIDI-Serial Bridge](https://projectgus.github.io/hairless-midiserial/))
 2. Using a MIDI-to-USB cable
 
-The two ways are fully documented [here](https://github.com/levosos/Midier#setup) in Midier GitHub repository.
+The two ways are fully documented [here](https://github.com/razrotenberg/Midier#setup) in Midier GitHub repository.
 
-Note that you need to set the baud rate properly in the Arduino sketch (the parameter passed to the `Serial.begin()`) according to the way you are connecting your Arduino to the MIDI device. This is also fully described [here](https://github.com/levosos/Midier#baud-rate) in Midier GitHub repository.
+Note that you need to set the baud rate properly in the Arduino sketch (the parameter passed to the `Serial.begin()`) according to the way you are connecting your Arduino to the MIDI device. This is also fully described [here](https://github.com/razrotenberg/Midier#baud-rate) in Midier GitHub repository.
 
 # Tutorial
 
@@ -105,7 +105,7 @@ Pick your MIDI-to-Serial bridge software. I personally use [Hairless MIDI-Serial
 
 Pick your favorite software for playing MIDI notes. A few that I know of: GarageBand (my choice), Logic Pro X, Ableton, Cubase, LMMS, etc.
 
-Optionallly, check out some of [Midier examples](https://github.com/levosos/Midier#listen-to-examples) on GitHub and verify your setup works
+Optionallly, check out some of [Midier examples](https://github.com/razrotenberg/Midier#listen-to-examples) on GitHub and verify your setup works
 
 ## Tutorial: Step One - Playing Arpeggios
 
@@ -627,7 +627,7 @@ controlino::Button Record(Multiplexer, 0);
 We will add a control method that will handle I/O events from this button.
 Upon each event we will call a method of our Midier sequencer.
 On click, we will toggle the recording mode using `record()`.
-This is fully documented [here](https://github.com/levosos/Midier#recording-and-looping) on Midier repository.
+This is fully documented [here](https://github.com/razrotenberg/Midier#recording-and-looping) on Midier repository.
 On long click (press), we will revoke the last recorded layer.
 On click and press, we will stop the recording entirely.
 
